@@ -21,7 +21,8 @@ export default function ResetPassword() {
   return (
     <div className="flex items-center justify-center h-screen">
       <form onSubmit={handleReset} className="w-full max-w-sm bg-white p-6 rounded shadow">
-        <h2 className="text-2xl mb-4">Reset Password</n        <div className="mb-4">
+        <h2 className="text-2xl mb-4">Reset Password</h2>
+        <div className="mb-4">
           <label className="block text-gray-700">Email</label>
           <input
             type="email"
@@ -39,3 +40,5 @@ export default function ResetPassword() {
         </button>
       </form>
     </div>
+  );
+}
