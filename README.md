@@ -1,9 +1,9 @@
-# sc-adacemic.5.6
-ai assistant API setup
 
 # Overview
 
-Here’s a blueprint for a **dynamic React SPA + Express** web interface that you can run either **locally** or **in a server/containerized** environment.
+### config notes
+	- Assumes deployment in docker.  
+	-- for non-docker depoyment, change the commented-out variables in the .env.example file
 
 ---
 

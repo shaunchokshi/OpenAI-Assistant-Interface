@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:15-alpine
+    container_name: psql
     restart: always
     environment:
       POSTGRES_USER: ${PG_USER}
@@ -9,9 +10,10 @@ services:
     ports:
       - "${PG_PORT:-5432}:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - ./db_data:/var/lib/postgresql/data
 
   server:
+    container_name: app-server
     build: ./server
     volumes:
       - ./server/uploads:/app/uploads
@@ -39,10 +41,11 @@ services:
       - GOOGLE_SECRET=${GOOGLE_SECRET}
 
   client:
+    container_name: app-client
     build: ./client
     ports:
       - 3000:3000
     depends_on:
       - server
-volumes:
-  db_data:
+#volumes:
+  #db_data:

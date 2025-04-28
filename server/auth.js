@@ -26,7 +26,7 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, pw, don
 passport.use(new GitHubStrategy({
   clientID: process.env.GITHUB_ID,
   clientSecret: process.env.GITHUB_SECRET,
-  callbackURL: '/auth/github/callback'
+  callbackURL: process.env.GITHUB_CALLBACK,
 }, async (accessToken, refreshToken, profile, done) => {
   // Upsert user by email
   const email = profile.emails[0].value;
@@ -44,7 +44,7 @@ passport.use(new GitHubStrategy({
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_ID,
   clientSecret: process.env.GOOGLE_SECRET,
-  callbackURL: '/auth/google/callback'
+  callbackURL: process.env.GOOGLE_CALLBACK,
 }, async (token, tokenSecret, profile, done) => {
   const email = profile.emails[0].value;
   const res = await pool.query(
