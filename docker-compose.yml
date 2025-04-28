@@ -1,0 +1,19 @@
+services:
+  server:
+    build: ./server
+    volumes:
+      - ./server/uploads:/app/uploads
+      - ./server/thread.json:/app/thread.json
+      - ./server/logs:/app/logs
+    ports:
+      - 4000:4000
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      NODE_ENV: production
+
+  client:
+    build: ./client
+    ports:
+      - 3000:3000
+    depends_on:
+      - server
