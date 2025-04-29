@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_DB: ${PG_DB}
     networks:
-      - interface-app-ne
+      - interface-app-net
     ports:
       - "${PG_PORT:-5432}:5432"
     volumes:
@@ -22,7 +22,7 @@ services:
       - ./server/thread.json:/app/thread.json
       - ./server/logs:/app/logs
     networks:
-      - interface-app-ne
+      - interface-app-net
     ports:
       - 4000:4000
     environment:
@@ -48,7 +48,7 @@ services:
     container_name: app-client
     build: ./client
     networks:
-      - interface-app-ne
+      - interface-app-net
     ports:
       - 3000:3000
     depends_on:
