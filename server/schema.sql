@@ -1,3 +1,4 @@
+-- schema.sql
 -- Users table
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,

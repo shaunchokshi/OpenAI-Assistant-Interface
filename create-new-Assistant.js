@@ -1,4 +1,4 @@
-// import the required dependencies
+// create-new-Assistant.js import the required dependencies
 require("dotenv").config();
 const OpenAI = require("openai");
 const fsPromises = require("fs").promises;

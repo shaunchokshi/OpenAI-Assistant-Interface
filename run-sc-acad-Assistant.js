@@ -1,3 +1,4 @@
+// run-sc-acad-Assistant.js
 require("dotenv").config();
 const OpenAI = require("openai");
 const fsPromises = require("fs").promises;
