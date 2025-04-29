@@ -5,7 +5,7 @@ import path from "path";
 import { Request, Response } from "express";
 
 const ASSISTANT_ID = process.env.ASSISTANT_ID || "asst_LeAZHFv3z9giuBVjuB2d1V85";
-const THREAD_FILE = "./thread.json";
+const THREADS_DIR = "./threads";
 const LOG_DIR = "./logs";
 
 // Initialize OpenAI client
@@ -13,14 +13,17 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Ensure logs directory exists
+// Ensure required directories exist
 (async () => {
   try {
+    await mkdir(THREADS_DIR, { recursive: true });
     await mkdir(LOG_DIR, { recursive: true });
   } catch (error) {
-    console.error("Error creating logs directory:", error);
+    console.error("Error creating required directories:", error);
   }
 })();
+
+// Remove duplicate directory creation
 
 // Log messages to file
 async function logMessage(role: string, text: string) {
@@ -34,18 +37,28 @@ async function logMessage(role: string, text: string) {
   }
 }
 
-// Initialize thread
+// Initialize or get a thread for a user
 export async function initThread(req: Request, res: Response) {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    const userId = req.user.id;
+    const userThreadFile = path.join(THREADS_DIR, `user_${userId}_thread.json`);
+    
     let threadId: string;
     try {
-      const data = await readFile(THREAD_FILE, "utf8");
+      // Try to get an existing thread for this user
+      const data = await readFile(userThreadFile, "utf8");
       threadId = JSON.parse(data).threadId;
     } catch {
+      // Create a new thread if none exists
       const thread = await openai.beta.threads.create();
       threadId = thread.id;
-      await writeFile(THREAD_FILE, JSON.stringify({ threadId }, null, 2));
+      await writeFile(userThreadFile, JSON.stringify({ threadId }, null, 2));
     }
+    
     res.json({ threadId });
   } catch (err: any) {
     console.error("Error initializing thread:", err);
@@ -126,14 +139,21 @@ function getCompatibleFiles(dir: string, exts: string[]): string[] {
 // Upload files to assistant
 export async function uploadFiles(req: Request, res: Response) {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    // Get the assistant ID from user or use default
+    const assistantId = req.user.assistantId || ASSISTANT_ID;
+    
     // Retrieve existing file IDs
-    const assistant = await openai.beta.assistants.retrieve(ASSISTANT_ID);
+    const assistant = await openai.beta.assistants.retrieve(assistantId);
     const existing = assistant.file_ids || [];
     let toUpload: any[] = [];
 
     // Handle single file upload
     if (req.files?.file) {
-      toUpload = [req.files.file];
+      toUpload = Array.isArray(req.files.file) ? req.files.file : [req.files.file];
     } 
     // Handle directory upload
     else if (req.body.dir) {
@@ -151,18 +171,33 @@ export async function uploadFiles(req: Request, res: Response) {
     // Upload files to OpenAI
     const newIds: string[] = [];
     for (let f of toUpload) {
-      const file = await openai.files.create({
-        file: f.data || fs.createReadStream(f.tempFilePath || f),
-        purpose: "assistants",
-      });
-      newIds.push(file.id);
+      try {
+        const file = await openai.files.create({
+          file: f.data || fs.createReadStream(f.tempFilePath || f),
+          purpose: "assistants",
+        });
+        newIds.push(file.id);
+      } catch (fileErr) {
+        console.error("Error uploading file:", fileErr);
+        // Continue with other files if one fails
+      }
+    }
+
+    if (newIds.length === 0) {
+      return res.status(400).json({ error: "No files were successfully uploaded" });
     }
 
     // Update assistant with new file IDs
-    const allIds = [...new Set([...existing, ...newIds])];
-    await openai.beta.assistants.update(ASSISTANT_ID, { file_ids: allIds });
+    const fileIds = [...existing, ...newIds];
+    await openai.beta.assistants.update(assistantId, {
+      tools: [{ type: "retrieval" as any }],
+      file_ids: fileIds as any
+    });
     
-    res.json({ file_ids: allIds });
+    res.json({ 
+      file_ids: fileIds,
+      message: `Successfully uploaded ${newIds.length} file(s)`
+    });
   } catch (err: any) {
     console.error("Error uploading files:", err);
     res.status(500).json({ error: err.message });
