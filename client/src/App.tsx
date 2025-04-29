@@ -10,6 +10,7 @@ import AuthPage from "@/pages/auth-page";
 import ChatPage from "@/pages/chat-page";
 import UsersPage from "@/pages/users-page";
 import SettingsPage from "@/pages/settings-page";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function Router() {
   return (
@@ -25,14 +26,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ThemeProvider defaultTheme="dark">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
