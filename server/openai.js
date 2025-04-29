@@ -1,11 +1,11 @@
-// openai.js
-import fsPromises from "fs/promises";
+import { promises as fsPromises } from "fs";
 import fs from "fs";
 import path from "path";
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const ASSISTANT_ID = "asst_LeAZHFv3z9giuBVjuB2d1V85";
+// Make this configurable through environment or database
+const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || "asst_LeAZHFv3z9giuBVjuB2d1V85"; 
 const THREAD_FILE = "./thread.json";
 const LOG_DIR = "./logs";
 
@@ -32,13 +32,19 @@ export async function initThread(req, res) {
     }
     res.json({ threadId });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Thread initialization error:", err);
+    res.status(500).json({ error: "Failed to initialize thread", details: err.message });
   }
 }
 
 export async function chatWithAssistant(req, res) {
   try {
     const { threadId, message } = req.body;
+    
+    if (!threadId || !message) {
+      return res.status(400).json({ error: "Thread ID and message are required" });
+    }
+    
     await logMessage("user", message);
 
     // post user message
@@ -53,12 +59,25 @@ export async function chatWithAssistant(req, res) {
 
     // poll until complete
     let status = await openai.beta.threads.runs.retrieve(threadId, run.id);
-    while (status.status !== "completed") {
+    let attempts = 0;
+    const maxAttempts = 30; // Prevent infinite loops
+    
+    while (status.status !== "completed" && attempts < maxAttempts) {
       await new Promise((r) => setTimeout(r, 1000));
       status = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      attempts++;
+      
       if (["failed", "cancelled", "expired"].includes(status.status)) {
-        return res.status(500).json({ status: status.status });
+        return res.status(500).json({ 
+          status: status.status,
+          error: "Assistant run failed to complete", 
+          details: status.last_error || "Unknown error" 
+        });
       }
+    }
+    
+    if (attempts >= maxAttempts) {
+      return res.status(504).json({ error: "Request timed out" });
     }
 
     const msgs = await openai.beta.threads.messages.list(threadId);
@@ -66,13 +85,22 @@ export async function chatWithAssistant(req, res) {
       .filter((m) => m.run_id === run.id && m.role === "assistant")
       .pop();
 
+    if (!assistantMsg) {
+      return res.status(404).json({ error: "No assistant response found" });
+    }
+
     const text = assistantMsg?.content[0].text.value || "";
     await logMessage("assistant", text);
     res.json({ text });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Chat error:", err);
+    res.status(500).json({ error: "Failed to communicate with OpenAI", details: err.message });
   }
 }
+
+// Improved file validation
+const VALID_EXTENSIONS = [".jsonl", ".txt", ".csv", ".pdf", ".docx"];
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB limit
 
 function getCompatibleFiles(dir, exts) {
   let out = [];
@@ -89,30 +117,80 @@ export async function uploadFiles(req, res) {
     const existing = (await openai.beta.assistants.retrieve(ASSISTANT_ID)).file_ids || [];
     let toUpload = [];
 
-    // single file vs directory
+    // single file case
     if (req.files?.file) {
-      toUpload = [req.files.file];
-    } else if (req.body.dir) {
-      const exts = [".jsonl", ".txt", ".csv", ".pdf", ".docx"];
-      const paths = getCompatibleFiles(req.body.dir, exts);
-      toUpload = paths.map((p) => ({ name: path.basename(p), mv: null, data: fs.createReadStream(p) }));
-    } else {
-      return res.status(400).json({ error: "No file or dir provided" });
+      const file = req.files.file;
+      
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        return res.status(400).json({ error: `File too large (max ${MAX_FILE_SIZE / 1024 / 1024}MB)` });
+      }
+      
+      // Validate file extension
+      const ext = path.extname(file.name).toLowerCase();
+      if (!VALID_EXTENSIONS.includes(ext)) {
+        return res.status(400).json({ 
+          error: `Invalid file type. Allowed: ${VALID_EXTENSIONS.join(', ')}` 
+        });
+      }
+      
+      toUpload = [file];
+    } 
+    // directory case
+    else if (req.body.dir) {
+      // Validate directory exists
+      if (!fs.existsSync(req.body.dir)) {
+        return res.status(400).json({ error: "Directory not found" });
+      }
+      
+      const paths = getCompatibleFiles(req.body.dir, VALID_EXTENSIONS);
+      
+      if (paths.length === 0) {
+        return res.status(400).json({ error: "No compatible files found in directory" });
+      }
+      
+      toUpload = paths.map((p) => ({ 
+        name: path.basename(p), 
+        mv: null, 
+        data: fs.createReadStream(p) 
+      }));
+    } 
+    else {
+      return res.status(400).json({ error: "No file or directory provided" });
     }
 
     const newIds = [];
+    const errors = [];
+    
     for (let f of toUpload) {
-      const file = await openai.files.create({
-        file: f.data || fs.createReadStream(f.tempFilePath || f),
-        purpose: "assistants",
+      try {
+        const file = await openai.files.create({
+          file: f.data || fs.createReadStream(f.tempFilePath || f),
+          purpose: "assistants",
+        });
+        newIds.push(file.id);
+      } catch (err) {
+        errors.push({ file: f.name, error: err.message });
+      }
+    }
+
+    if (newIds.length === 0 && errors.length > 0) {
+      return res.status(500).json({ 
+        error: "All file uploads failed", 
+        details: errors 
       });
-      newIds.push(file.id);
     }
 
     const allIds = [...new Set([...existing, ...newIds])];
     await openai.beta.assistants.update(ASSISTANT_ID, { file_ids: allIds });
-    res.json({ file_ids: allIds });
+    
+    res.json({ 
+      file_ids: allIds,
+      uploaded: newIds.length,
+      failed: errors.length > 0 ? errors : undefined
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("File upload error:", err);
+    res.status(500).json({ error: "File upload failed", details: err.message });
   }
 }

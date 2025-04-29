@@ -37,6 +37,8 @@ app.use(passport.session());
 // Auth routes
 app.post('/api/login', passport.authenticate('local'), (req, res) => res.json({ ok: true }));
 app.post('/api/logout', (req, res) => { req.logout(() => res.json({ ok: true })); });
+// Add this to the existing routes
+app.get('/api/auth/check', ensureAuth, (req, res) => res.json({ authenticated: true }));
 app.post('/api/reset-password', resetPassword);
 // OAuth routes (GitHub & Google)
 app.get('/auth/github', passport.authenticate('github'));
