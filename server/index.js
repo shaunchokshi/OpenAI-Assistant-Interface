@@ -66,14 +66,25 @@ app.post('/api/chat', ensureAuth, chatWithAssistant);
 app.post('/api/upload', ensureAuth, uploadFiles);
 app.post('/api/upload-directory', ensureAuth, uploadFiles);
 
+// Comment out or remove the React app serving code since Nginx will handle it
 // Serve React app
-if (process.env.NODE_ENV === 'production') {
-  const clientPath = path.join(__dirname, '../client/build');
-  app.use(express.static(clientPath));
-  app.get('*', (req, res) =>
-    res.sendFile(path.join(clientPath, 'index.html'))
-  );
-}
+// if (process.env.NODE_ENV === 'production') {
+//   const clientPath = path.join(__dirname, '../client/build');
+//   app.use(express.static(clientPath));
+//   app.get('*', (req, res) =>
+//     res.sendFile(path.join(clientPath, 'index.html'))
+//   );
+// }
+
+// Instead, just handle API routes and let the frontend be served by Nginx
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// Add this at the end of your routes to respond to any API requests that don't match
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API route not found' });
+});
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, '0.0.0.0', () => console.log(`Server listening on ${PORT}`));
