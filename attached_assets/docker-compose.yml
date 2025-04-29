@@ -1,0 +1,65 @@
+#docker-compose.yml
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: app-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    networks:
+      - interface-app-net
+    ports:
+      - "${PG_PORT:-5432}:5432"
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+
+  server:
+    container_name: app-server
+    build: ./server
+    volumes:
+      - ./server/uploads:/app/uploads
+      - ./server/thread.json:/app/thread.json
+      - ./server/logs:/app/logs
+    networks:
+      - interface-app-net
+    ports:
+      - 4000:4000
+    environment:
+      - PG_HOST=db
+      - PG_PORT=${PG_PORT}
+      - PG_USER=${PG_USER}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_DB=${PG_DB}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NODE_ENV=production
+      - SMTP_RELAY_SERVER=${SMTP_RELAY_SERVER}
+      - SMTP_RELAY_USER=${SMTP_RELAY_USER}
+      - SMTP_RELAY_PASSWORD=${SMTP_RELAY_PASSWORD}
+      - SMTP_RELAY_PORT=${SMTP_RELAY_PORT}
+      - SMTP_FROM=${SMTP_FROM}
+      - GITHUB_ID=${GITHUB_ID}
+      - GITHUB_SECRET=${GITHUB_SECRET}
+      - GOOGLE_ID=${GOOGLE_ID}
+      - GOOGLE_SECRET=${GOOGLE_SECRET}
+
+  client:
+    container_name: app-client
+    build: ./client
+    networks:
+      - interface-app-net
+    ports:
+      - 3000:3000
+    depends_on:
+      - server
+#volumes:
+  #db_data:
+networks:
+  interface-app-net:
+    name: interface-app-net
+    enable_ipv4: true
+    enable_ipv6: false
+    driver: bridge
+    attachable: true
