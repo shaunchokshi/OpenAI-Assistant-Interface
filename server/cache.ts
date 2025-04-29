@@ -9,11 +9,12 @@ const cache = new Map<string, {
 // Clear expired items from cache (called periodically)
 function clearExpiredCache() {
   const now = Date.now();
-  for (const [key, { expiry }] of cache.entries()) {
+  // Convert to array to avoid iterator issues
+  Array.from(cache.entries()).forEach(([key, { expiry }]) => {
     if (now > expiry) {
       cache.delete(key);
     }
-  }
+  });
 }
 
 // Set up interval to clear expired cache entries
@@ -61,11 +62,11 @@ export function cacheMiddleware(duration: number = 300) { // Default 5 minutes
 // Helper function to manually invalidate cache
 export function invalidateCache(pattern?: RegExp) {
   if (pattern) {
-    for (const key of cache.keys()) {
+    Array.from(cache.keys()).forEach(key => {
       if (pattern.test(key)) {
         cache.delete(key);
       }
-    }
+    });
   } else {
     cache.clear();
   }
