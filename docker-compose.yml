@@ -64,7 +64,7 @@ services:
     networks:
       - interface-app-net
     ports:
-      - 80:80
+      - 5000:80
     depends_on:
       - client
       - server
