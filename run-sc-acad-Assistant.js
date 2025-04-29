@@ -1,10 +1,15 @@
 // run-sc-acad-Assistant.js
-require("dotenv").config();
-const OpenAI = require("openai");
-const fsPromises = require("fs").promises;
-const fs = require("fs");
-const path = require("path");
-const readline = require("readline").createInterface({
+import dotenv from 'dotenv';
+import OpenAI from 'openai';
+import { promises as fsPromises } from 'fs';
+import fs from 'fs';
+import path from 'path';
+import { createInterface } from 'readline';
+
+dotenv.config();
+
+// Create readline interface
+const readline = createInterface({
   input: process.stdin,
   output: process.stdout,
 });

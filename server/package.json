@@ -7,21 +7,21 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "bcrypt": "^5.1.0",
-    "connect-pg-simple": "^8.0.0",
-    "dotenv": "^16.0.0",
+    "bcrypt": "^5.1.1",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "express-fileupload": "^1.4.0",
-    "express-session": "^1.17.3",
-    "nodemailer": "^6.9.0",
-    "openai": "^4.0.0",
-    "passport": "^0.6.0",
+    "express-fileupload": "^1.4.3",
+    "express-session": "^1.18.0",
+    "nodemailer": "^6.9.9",
+    "openai": "^4.28.0",
+    "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
-    "pg": "^8.11.0"
+    "pg": "^8.11.3"
   },
   "devDependencies": {
-    "nodemon": "^2.0.20"
+    "nodemon": "^3.0.3"
   }
 }

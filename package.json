@@ -1,35 +1,17 @@
 {
-  "name": "sc-adacemic.5.6",
+  "name": "openai-assistant-interface",
   "version": "1.0.0",
-  "description": "ai assistant API setup",
-  "main": "runAssistant.js",
+  "description": "OpenAI Assistant API Interface",
+  "type": "module",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shaunchokshi/sc-adacemic.5.6.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/shaunchokshi/sc-adacemic.5.6/issues"
-  },
-  "homepage": "https://github.com/shaunchokshi/sc-adacemic.5.6#readme",
   "dependencies": {
-    "connect-pg-simple": "^10.0.0",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "express-fileupload": "^1.5.1",
-    "express-session": "^1.18.1",
-    "fs": "^0.0.1-security",
-    "openai": "^4.96.0",
-    "passport": "^0.7.0",
-    "passport-github2": "^0.1.12",
-    "passport-google": "^0.3.0",
-    "passport-local": "^1.0.0",
-    "path": "^0.12.7",
-    "readline": "^1.3.0"
+    "concurrently": "^8.2.2"
   }
 }

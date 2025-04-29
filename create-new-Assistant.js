@@ -1,21 +1,26 @@
-// create-new-Assistant.js import the required dependencies
-require("dotenv").config();
-const OpenAI = require("openai");
-const fsPromises = require("fs").promises;
-const fs = require("fs");
-const readline = require("readline").createInterface({
+// create-new-Assistant.js
+import dotenv from 'dotenv';
+import OpenAI from 'openai';
+import { promises as fsPromises } from 'fs';
+import fs from 'fs';
+import { createInterface } from 'readline';
+
+dotenv.config();
+
+// Create readline interface
+const readline = createInterface({
   input: process.stdin,
   output: process.stdout,
 });
 
-// Create a OpenAI connection
+// Create an OpenAI connection
 const secretKey = process.env.OPENAI_API_KEY;
 const openai = new OpenAI({
   apiKey: secretKey,
 });
 
 async function askQuestion(question) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     readline.question(question, (answer) => {
       resolve(answer);
     });
@@ -33,7 +38,7 @@ async function main() {
         assistantFilePath,
         "utf8"
       );
-      assistantDetails = JSON.parse(assistantData);
+      const assistantDetails = JSON.parse(assistantData);
       assistantId = assistantDetails.assistantId;
       console.log("\nExisting assistant detected.\n");
     } catch (error) {
@@ -48,7 +53,7 @@ async function main() {
       };
 
       const assistant = await openai.beta.assistants.create(assistantConfig);
-      assistantDetails = { assistantId: assistant.id, ...assistantConfig };
+      const assistantDetails = { assistantId: assistant.id, ...assistantConfig };
 
       // Save the assistant details to assistant.json
       await fsPromises.writeFile(
@@ -116,7 +121,7 @@ async function main() {
             assistant_id: assistantId,
           });
 
-          // Imediately fetch run-status, which will be "in_progress"
+          // Immediately fetch run-status, which will be "in_progress"
           let runStatus = await openai.beta.threads.runs.retrieve(
             thread.id,
             run.id
