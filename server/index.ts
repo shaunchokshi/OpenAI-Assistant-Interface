@@ -42,9 +42,21 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    
+    // Log error in development, but not in production to avoid leaking sensitive info
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(err);
+    } else {
+      // In production, log only non-sensitive error info
+      console.error(`Error ${status}: ${message}`);
+    }
 
-    res.status(status).json({ message });
-    throw err;
+    // Always return a clean error message to the client
+    res.status(status).json({ 
+      message: process.env.NODE_ENV === 'production' && status === 500 
+        ? 'Internal Server Error' 
+        : message 
+    });
   });
 
   // importantly only setup vite in development and after
