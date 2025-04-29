@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import fileUpload from "express-fileupload";
 import rateLimit from "express-rate-limit";
 import { setupAuth } from "./auth";
+import { cacheMiddleware } from "./cache";
 import { chatWithAssistant, initThread, uploadFiles } from "./openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -46,9 +47,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/upload", ensureAuthenticated, uploadFiles);
   app.post("/api/upload-directory", ensureAuthenticated, uploadFiles);
 
-  // Health check
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+  // Health check with 1-minute cache
+  app.get("/api/health", cacheMiddleware(60), (req, res) => {
+    res.json({ 
+      status: "ok", 
+      version: "1.0",
+      environment: process.env.NODE_ENV || 'development',
+      timestamp: new Date().toISOString()
+    });
   });
 
   const httpServer = createServer(app);

@@ -2,11 +2,16 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import helmet from "helmet";
+import compression from "compression";
 
 const app = express();
 
-// Apply Helmet security middleware in production
+// Apply production middleware
 if (process.env.NODE_ENV === 'production') {
+  // Add compression for better performance
+  app.use(compression());
+  
+  // Add Helmet for security headers
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
@@ -19,7 +24,7 @@ if (process.env.NODE_ENV === 'production') {
       }
     }
   }));
-} 
+}
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
