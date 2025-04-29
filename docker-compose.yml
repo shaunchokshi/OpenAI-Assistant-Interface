@@ -1,12 +1,14 @@
 services:
   db:
     image: postgres:15-alpine
-    container_name: psql
+    container_name: app-db
     restart: always
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_DB: ${PG_DB}
+    networks:
+      - interface-app-ne
     ports:
       - "${PG_PORT:-5432}:5432"
     volumes:
@@ -19,11 +21,13 @@ services:
       - ./server/uploads:/app/uploads
       - ./server/thread.json:/app/thread.json
       - ./server/logs:/app/logs
+    networks:
+      - interface-app-ne
     ports:
       - 4000:4000
     environment:
       - PG_HOST=db
-      - PG_PORT=5432
+      - PG_PORT=${PG_PORT}
       - PG_USER=${PG_USER}
       - PG_PASSWORD=${PG_PASSWORD}
       - PG_DB=${PG_DB}
@@ -43,9 +47,18 @@ services:
   client:
     container_name: app-client
     build: ./client
+    networks:
+      - interface-app-ne
     ports:
       - 3000:3000
     depends_on:
       - server
 #volumes:
   #db_data:
+networks:
+  interface-app-net:
+    name: interface-app-net
+    enable_ipv4: true
+    enable_ipv6: false
+    driver: bridge
+    attachable: true
