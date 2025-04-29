@@ -1,3 +1,4 @@
+
 import express from 'express';
 import session from 'express-session';
 import pgSession from 'connect-pg-simple';
@@ -5,10 +6,14 @@ import passport from 'passport';
 import fileUpload from 'express-fileupload';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { initThread, chatWithAssistant, uploadFiles } from './openai.js';
 import { resetPassword, listUsers, addUser, rmUser } from './auth.js';
 import './auth.js'; // passport config
 import { pool } from './db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
@@ -31,7 +36,7 @@ app.use(passport.session());
 
 // Auth routes
 app.post('/api/login', passport.authenticate('local'), (req, res) => res.json({ ok: true }));
-app.post('/api/logout', (req, res) => { req.logout(); res.json({ ok: true }); });
+app.post('/api/logout', (req, res) => { req.logout(() => res.json({ ok: true })); });
 app.post('/api/reset-password', resetPassword);
 // OAuth routes (GitHub & Google)
 app.get('/auth/github', passport.authenticate('github'));
@@ -61,11 +66,12 @@ app.post('/api/upload-directory', ensureAuth, uploadFiles);
 
 // Serve React app
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
+  const clientPath = path.join(__dirname, '../client/build');
+  app.use(express.static(clientPath));
   app.get('*', (req, res) =>
-    res.sendFile(path.join(__dirname, '../client/build/index.html'))
+    res.sendFile(path.join(clientPath, 'index.html'))
   );
 }
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Server listening on ${PORT}`));
