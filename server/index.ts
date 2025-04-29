@@ -107,4 +107,57 @@ app.use((req, res, next) => {
   }, () => {
     logger.info(`Server started and listening on port ${port}`);
   });
+
+  // Graceful shutdown handling
+  let shuttingDown = false;
+  
+  // Function to handle graceful shutdown
+  const gracefulShutdown = (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    
+    logger.info(`Received ${signal}, starting graceful shutdown`);
+    
+    // Create a timeout for forced shutdown in case graceful shutdown hangs
+    const forceShutdownTimeout = setTimeout(() => {
+      logger.error('Forcefully shutting down after timeout');
+      process.exit(1);
+    }, 30000); // 30 seconds timeout
+    
+    // Close the HTTP server
+    server.close((err) => {
+      clearTimeout(forceShutdownTimeout);
+      
+      if (err) {
+        logger.error(`Error during server shutdown: ${err.message}`);
+        process.exit(1);
+      }
+      
+      // Close database pool and other connections
+      try {
+        // Optionally close the database pool if needed
+        // await db.end();
+        logger.info('Graceful shutdown completed');
+        process.exit(0);
+      } catch (err: any) {
+        logger.error(`Error closing database: ${err.message}`);
+        process.exit(1);
+      }
+    });
+  };
+  
+  // Register shutdown handlers
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  
+  // Handle uncaught exceptions and unhandled promise rejections
+  process.on('uncaughtException', (err) => {
+    logger.error(`Uncaught exception: ${err.message}`, { stack: err.stack });
+    gracefulShutdown('uncaughtException');
+  });
+  
+  process.on('unhandledRejection', (reason) => {
+    logger.error(`Unhandled rejection: ${reason instanceof Error ? reason.message : String(reason)}`);
+    gracefulShutdown('unhandledRejection');
+  });
 })();

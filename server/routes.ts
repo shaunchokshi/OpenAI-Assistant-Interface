@@ -6,6 +6,30 @@ import { setupAuth } from "./auth";
 import { cacheMiddleware } from "./cache";
 import { chatWithAssistant, initThread, uploadFiles } from "./openai";
 
+// Format uptime into human-readable string
+function formatUptime(uptime: number): string {
+  const days = Math.floor(uptime / 86400);
+  const hours = Math.floor((uptime % 86400) / 3600);
+  const minutes = Math.floor((uptime % 3600) / 60);
+  const seconds = Math.floor(uptime % 60);
+  
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+  
+  return parts.join(' ');
+}
+
+// Middleware to ensure user is authenticated
+function ensureAuthenticated(req: any, res: any, next: any) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: "Not authenticated" });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up file upload middleware
   app.use(fileUpload({
@@ -48,23 +72,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/upload-directory", ensureAuthenticated, uploadFiles);
 
   // Health check with 1-minute cache
-  app.get("/api/health", cacheMiddleware(60), (req, res) => {
-    res.json({ 
-      status: "ok", 
-      version: "1.0",
-      environment: process.env.NODE_ENV || 'development',
-      timestamp: new Date().toISOString()
-    });
+  app.get("/api/health", cacheMiddleware(60), async (req, res) => {
+    try {
+      // Collect system metrics
+      const memoryUsage = process.memoryUsage();
+      const uptime = process.uptime();
+      
+      // Basic system health
+      const health = { 
+        status: "ok",
+        version: "1.0",
+        environment: process.env.NODE_ENV || 'development',
+        timestamp: new Date().toISOString(),
+        uptime: {
+          seconds: uptime,
+          formatted: formatUptime(uptime)
+        },
+        memory: {
+          rss: `${Math.round(memoryUsage.rss / 1024 / 1024)} MB`,
+          heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`,
+          heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`,
+          external: `${Math.round(memoryUsage.external / 1024 / 1024)} MB`,
+        }
+      };
+      
+      res.json(health);
+    } catch (error) {
+      // Even if metrics collection fails, return a 200 OK but with warning
+      res.json({ 
+        status: "degraded",
+        message: "Health check succeeded but metrics collection failed",
+        timestamp: new Date().toISOString()
+      });
+    }
   });
 
   const httpServer = createServer(app);
   return httpServer;
-}
-
-// Middleware to ensure user is authenticated
-function ensureAuthenticated(req: any, res: any, next: any) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Unauthorized" });
 }
