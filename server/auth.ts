@@ -2,17 +2,18 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Express } from "express";
+import { Express, Request } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User, LoginUser, InsertUser } from "@shared/schema";
+import { User as UserType, LoginUser, InsertUser } from "@shared/schema";
 import { sendTempPassword } from "./email";
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Use UserType to avoid recursive type definition
+    interface User extends UserType {}
   }
 }
 
@@ -71,7 +72,7 @@ export function setupAuth(app: Express) {
   );
 
   // GitHub OAuth Strategy
-  if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
+  if (process.env.GITHUB_ID && process.env.GITHUB_SECRET && process.env.GITHUB_CALLBACK) {
     passport.use(
       new GitHubStrategy(
         {
@@ -79,7 +80,7 @@ export function setupAuth(app: Express) {
           clientSecret: process.env.GITHUB_SECRET,
           callbackURL: process.env.GITHUB_CALLBACK,
         },
-        async (_accessToken, _refreshToken, profile, done) => {
+        async (accessToken: string, refreshToken: string, profile: any, done: any) => {
           try {
             const email = profile.emails?.[0]?.value;
             if (!email) {
@@ -106,7 +107,7 @@ export function setupAuth(app: Express) {
   }
 
   // Google OAuth Strategy
-  if (process.env.GOOGLE_ID && process.env.GOOGLE_SECRET) {
+  if (process.env.GOOGLE_ID && process.env.GOOGLE_SECRET && process.env.GOOGLE_CALLBACK) {
     passport.use(
       new GoogleStrategy(
         {
@@ -115,7 +116,7 @@ export function setupAuth(app: Express) {
           callbackURL: process.env.GOOGLE_CALLBACK,
           scope: ["email", "profile"],
         },
-        async (_accessToken, _refreshToken, profile, done) => {
+        async (accessToken: string, refreshToken: string, profile: any, done: any) => {
           try {
             const email = profile.emails?.[0]?.value;
             if (!email) {
