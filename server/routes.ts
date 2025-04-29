@@ -1,6 +1,7 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import fileUpload from "express-fileupload";
+import rateLimit from "express-rate-limit";
 import { setupAuth } from "./auth";
 import { chatWithAssistant, initThread, uploadFiles } from "./openai";
 
@@ -13,6 +14,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up authentication
   setupAuth(app);
+
+  // Set up rate limiting
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    message: { error: "Too many requests, please try again later." }
+  });
+
+  // More aggressive rate limiting for auth endpoints to prevent brute force
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // limit each IP to 10 authentication attempts per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many login attempts, please try again later." }
+  });
+
+  // Apply the rate limiting middleware to API calls only if in production
+  if (process.env.NODE_ENV === 'production') {
+    app.use('/api/login', authLimiter);
+    app.use('/api/register', authLimiter);
+    app.use('/api/', apiLimiter);
+  }
 
   // OpenAI Assistant routes
   app.post("/api/thread/new", ensureAuthenticated, initThread);
