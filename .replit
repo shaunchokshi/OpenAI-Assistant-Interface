@@ -1,8 +1,0 @@
-modules = ["nodejs-20", "web"]
-run = "node index.js"
-
-[nix]
-channel = "stable-24_05"
-
-[deployment]
-run = ["sh", "-c", "node index.js"]
