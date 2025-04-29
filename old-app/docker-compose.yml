@@ -23,9 +23,11 @@ services:
       - ./server/uploads:/app/uploads
       - ./server/thread.json:/app/thread.json
       - ./server/logs:/app/logs
-#    networks:
-#      - interface-app-net
-    network_mode: host
+    networks:
+      - interface-app-net
+#    network_mode: host
+    ports:
+      - 4000:4000
     expose:
       - 4000
     environment:
@@ -53,38 +55,51 @@ services:
       - GOOGLE_CALLBACK=${GOOGLE_CALLBACK}
 #    depends_on:
 #      - db
-
+    extra_hosts:
+      - "host.docker.internal:172.20.0.1"
   client:
     container_name: app-client
     build: ./client
-#    networks:
-#      - interface-app-net
-    network_mode: host
+    networks:
+      - interface-app-net
+#    network_mode: host
+    ports:
+      - 3000:3000
+#      - 3080:80
+#      - 3443:443
     expose:
       - 3000
     depends_on:
       - server
+    volumes:
+      - /root/certs:/certs:ro
+    extra_hosts:
+      - "host.docker.internal:172.20.0.1"
 
   nginx:
     container_name: app-nginx
     build: ./nginx
-#    networks:
-#      - interface-app-net
-    network_mode: host
+    networks:
+      - interface-app-net
+#    network_mode: host
     ports:
-      - 4999:80
-      - 5000:443
+      - 4999:4999
+      - 5000:5000
     depends_on:
       - client
       - server
     volumes:
       - /root/certs:/certs:ro
+      - ./client/build:/usr/share/nginx/html
+    command: [nginx-debug, '-g', 'daemon off;']
+    extra_hosts:
+      - "host.docker.internal:172.20.0.1"
 
-#networks:
-#  interface-app-net:
-#    name: interface-app-net
-#    enable_ipv4: true
-#    enable_ipv6: false
-#    driver: bridge
-#    attachable: true
+networks:
+  interface-app-net:
+    name: interface-app-net
+    enable_ipv4: true
+    enable_ipv6: false
+    driver: bridge
+    attachable: true
 
