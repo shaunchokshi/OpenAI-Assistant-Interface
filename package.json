@@ -43,6 +43,7 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@tailwindcss/vite": "^4.1.3",
     "@tanstack/react-query": "^5.60.5",
+    "@types/express-fileupload": "^1.5.1",
     "@types/nodemailer": "^6.4.17",
     "@types/passport-github2": "^1.2.9",
     "@types/passport-google-oauth20": "^2.0.16",
