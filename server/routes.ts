@@ -404,6 +404,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/upload", ensureAuthenticated, uploadFiles);
   app.post("/api/upload-directory", ensureAuthenticated, uploadFiles);
 
+  // File Management Endpoints
+  
+  // Get user's files
+  app.get("/api/files", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const files = await storage.getUserFiles(req.user.id);
+      return res.json(files);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      return res.status(500).json({ error: "Failed to fetch files" });
+    }
+  });
+  
+  // Upload a file
+  app.post("/api/files/upload", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      // Check if file was uploaded
+      if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).json({ error: "No file was uploaded" });
+      }
+      
+      const uploadedFile = req.files.file as fileUpload.UploadedFile;
+      const purpose = req.body.purpose || "assistants";
+      
+      // Validate purpose
+      const validPurposes = ["assistants", "fine-tuning", "assistants_output"];
+      if (!validPurposes.includes(purpose)) {
+        return res.status(400).json({ error: "Invalid purpose. Must be one of: assistants, fine-tuning, assistants_output" });
+      }
+      
+      // Validate file size (50MB limit)
+      const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+      if (uploadedFile.size > MAX_FILE_SIZE) {
+        return res.status(400).json({ error: "File size exceeds 50MB limit" });
+      }
+      
+      // Validate OpenAI API key
+      const validationResult = validateUserApiKey(req.user);
+      if (validationResult) {
+        return res.status(400).json(validationResult);
+      }
+      
+      // Create OpenAI client with user's API key (we know it exists after validation)
+      const openai = createOpenAIClient(req.user.openaiKeyHash!);
+      
+      try {
+        // Upload file to OpenAI
+        const file = await openai.files.create({
+          file: fs.createReadStream(uploadedFile.tempFilePath),
+          purpose: purpose,
+        });
+        
+        // Store file reference in database
+        const storedFile = await storage.addFile(
+          req.user.id,
+          file.id,
+          uploadedFile.name,
+          purpose,
+          uploadedFile.size,
+          undefined // not associated with an assistant yet
+        );
+        
+        // Clean up temp file
+        fs.unlinkSync(uploadedFile.tempFilePath);
+        
+        res.status(201).json(storedFile);
+      } catch (error: any) {
+        // Clean up temp file
+        if (uploadedFile.tempFilePath) {
+          fs.unlinkSync(uploadedFile.tempFilePath);
+        }
+        
+        console.error("OpenAI file upload error:", error);
+        
+        if (error.status === 401) {
+          return res.status(401).json({ error: "Invalid OpenAI API key" });
+        }
+        
+        return res.status(500).json({ 
+          error: "Failed to upload file to OpenAI",
+          details: error.message
+        });
+      }
+    } catch (error) {
+      console.error("File upload error:", error);
+      res.status(500).json({ error: "Internal server error during file upload" });
+    }
+  });
+  
+  // Delete a file
+  app.delete("/api/files/:id", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const fileId = parseInt(req.params.id, 10);
+      
+      // First get the file to check permissions and get the OpenAI file ID
+      const files = await storage.getUserFiles(req.user.id);
+      const file = files.find(f => f.id === fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found or you don't have permission to delete it" });
+      }
+      
+      // Validate OpenAI API key
+      const validationResult = validateUserApiKey(req.user);
+      if (validationResult) {
+        return res.status(400).json(validationResult);
+      }
+      
+      // Create OpenAI client with user's API key (we know it exists after validation)
+      const openai = createOpenAIClient(req.user.openaiKeyHash!);
+      
+      try {
+        // Delete file from OpenAI
+        await openai.files.del(file.openaiFileId);
+        
+        // Delete file reference from database
+        await storage.deleteFile(fileId);
+        
+        return res.status(200).json({ message: "File deleted successfully" });
+      } catch (error: any) {
+        console.error("OpenAI file deletion error:", error);
+        
+        // If the file doesn't exist on OpenAI's side, still delete it from our database
+        if (error.status === 404) {
+          await storage.deleteFile(fileId);
+          return res.status(200).json({ message: "File deleted from database (was already deleted from OpenAI)" });
+        }
+        
+        if (error.status === 401) {
+          return res.status(401).json({ error: "Invalid OpenAI API key" });
+        }
+        
+        return res.status(500).json({ 
+          error: "Failed to delete file from OpenAI",
+          details: error.message
+        });
+      }
+    } catch (error) {
+      console.error("File deletion error:", error);
+      return res.status(500).json({ error: "Internal server error during file deletion" });
+    }
+  });
+
   // Health check with 1-minute cache
   app.get("/api/health", cacheMiddleware(60), async (req, res) => {
     try {
