@@ -1,0 +1,80 @@
+getRawTag - _getRawTag.js:31:28
+TypeError: Symbol.toStringTag is read-only
+
+var Symbol = require('./_Symbol');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/** Built-in value references. */
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+
+/**
+ * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the raw `toStringTag`.
+ */
+function getRawTag(value) {
+  var isOwn = hasOwnProperty.call(value, symToStringTag),
+      tag = value[symToStringTag];
+
+  try {
+    value[symToStringTag] = undefined;
+    var unmasked = true;
+  } catch (e) {}
+
+  var result = nativeObjectToString.call(value);
+  if (unmasked) {
+    if (isOwn) {
+      value[symToStringTag] = tag;
+    } else {
+      delete value[symToStringTag];
+    }
+  }
+  return result;
+}
+
+module.exports = getRawTag;
+
+browser console output:
+Source map error: JSON.parse: unexpected character at line 1 column 1 of the JSON data
+Resource URL: https://07379bb3-25d9-4aaf-afbe-a0b5c75d508d-00-b0lfrp5lu7fb.picard.replit.dev/%3Canonymous%20code%3E
+Source Map URL: installHook.js.map
+[vite] connecting... client:495:9
+[vite] connected. client:618:15
+Source map error: No sources are declared in this source map.
+Resource URL: https://07379bb3-25d9-4aaf-afbe-a0b5c75d508d-00-b0lfrp5lu7fb.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react.js?v=b2fffbe9
+Source Map URL: react.js.map
+Source map error: No sources are declared in this source map.
+Resource URL: https://07379bb3-25d9-4aaf-afbe-a0b5c75d508d-00-b0lfrp5lu7fb.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WOOG5QLI.js?v=b2fffbe9
+Source Map URL: chunk-WOOG5QLI.js.map
+Source map error: No sources are declared in this source map.
+Resource URL: https://07379bb3-25d9-4aaf-afbe-a0b5c75d508d-00-b0lfrp5lu7fb.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=b2fffbe9
+Source Map URL: @radix-ui_react-dialog.js.map
+Source map error: No sources are declared in this source map.
+Resource URL: https://07379bb3-25d9-4aaf-afbe-a0b5c75d508d-00-b0lfrp5lu7fb.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/date-fns.js?v=b2fffbe9
+Source Map URL: date-fns.js.map
+Source map error: No sources are declared in this source map.
+Resource URL: https://07379bb3-25d9-4aaf-afbe-a0b5c75d508d-00-b0lfrp5lu7fb.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-slot.js?v=b2fffbe9
+Source Map URL: @radix-ui_react-slot.js.map
+Source map error: No sources are declared in this source map.
+Resource URL: https://07379bb3-25d9-4aaf-afbe-a0b5c75d508d-00-b0lfrp5lu7fb.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/clsx.js?v=b2fffbe9
+Source Map URL: clsx.js.map
+Source map error: map is undefined
+Resource URL: https://07379bb3-25d9-4aaf-afbe-a0b5c75d508d-00-b0lfrp5lu7fb.picard.replit.dev/%3Canonymous%20code%3E
+Source Map URL: react_devtools_backend_compact.js.map
+
+code of the only thing being rendered on screen in browser:
+<div data-replit-metadata="client/src/pages/home-page.tsx:12:4" data-component-name="div" class="container mx-auto px-4 py-8"><h1 data-replit-metadata="client/src/pages/home-page.tsx:13:6" data-component-name="h1" class="text-2xl font-bold mb-4">Welcome to OpenAI Assistant</h1><p data-replit-metadata="client/src/pages/home-page.tsx:14:6" data-component-name="p" class="mb-4">You are logged in as test@example.com</p><button data-replit-metadata="client/src/pages/home-page.tsx:15:6" data-component-name="button" class="bg-primary text-white px-4 py-2 rounded">Logout</button></div>
