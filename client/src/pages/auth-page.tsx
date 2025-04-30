@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { FaGithub } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -87,6 +90,34 @@ export default function AuthPage() {
                 >
                   {loginMutation.isPending ? "Logging in..." : "Login"}
                 </button>
+                
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-background px-2 text-xs text-muted-foreground">
+                      OR CONTINUE WITH
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <a 
+                    href="/auth/github"
+                    className="flex items-center justify-center gap-2 py-2 border rounded hover:bg-muted transition-colors"
+                  >
+                    <FaGithub className="h-5 w-5" />
+                    <span>GitHub</span>
+                  </a>
+                  <a 
+                    href="/auth/google"
+                    className="flex items-center justify-center gap-2 py-2 border rounded hover:bg-muted transition-colors"
+                  >
+                    <FcGoogle className="h-5 w-5" />
+                    <span>Google</span>
+                  </a>
+                </div>
               </form>
             </TabsContent>
             
@@ -141,6 +172,34 @@ export default function AuthPage() {
                 >
                   {registerMutation.isPending ? "Creating account..." : "Register"}
                 </button>
+                
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-background px-2 text-xs text-muted-foreground">
+                      OR SIGN UP WITH
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <a 
+                    href="/auth/github"
+                    className="flex items-center justify-center gap-2 py-2 border rounded hover:bg-muted transition-colors"
+                  >
+                    <FaGithub className="h-5 w-5" />
+                    <span>GitHub</span>
+                  </a>
+                  <a 
+                    href="/auth/google"
+                    className="flex items-center justify-center gap-2 py-2 border rounded hover:bg-muted transition-colors"
+                  >
+                    <FcGoogle className="h-5 w-5" />
+                    <span>Google</span>
+                  </a>
+                </div>
               </form>
             </TabsContent>
           </Tabs>
