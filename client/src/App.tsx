@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "./hooks/use-auth";
 import { Toaster } from "./components/ui/toaster";
 import { ProtectedRoute } from "./lib/protected-route";
+import { ThemeProvider } from "./components/theme-provider";
 
 // Pages
 import HomePage from "./pages/home-page";
@@ -48,10 +49,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="app-theme">
+        <AuthProvider>
+          <Router />
+          <Toaster />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
