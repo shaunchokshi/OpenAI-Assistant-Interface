@@ -1,5 +1,6 @@
 import React from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -10,10 +11,32 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FaGoogle, FaGithub } from "react-icons/fa";
+import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
+
+type OAuthProfiles = {
+  google?: {
+    id: number;
+    providerUserId: string;
+    connected: boolean;
+    createdAt: string;
+  };
+  github?: {
+    id: number;
+    providerUserId: string;
+    connected: boolean;
+    createdAt: string;
+  };
+};
 
 export default function ProfileInfo() {
   const { user } = useAuth();
+  
+  const { data: oauthProfiles, isLoading } = useQuery<OAuthProfiles>({
+    queryKey: ["/api/user/oauth-profiles"],
+    // Only fetch if user is authenticated
+    enabled: !!user,
+  });
 
   if (!user) {
     return null;
@@ -21,10 +44,8 @@ export default function ProfileInfo() {
 
   // Determine login method
   const hasPassword = !!user.password;
-  // These would need to come from an API endpoint that returns linked providers
-  // Since we don't have direct access to oauth profiles in the user object
-  const isGoogleLinked = false; // Would be determined from linked profiles
-  const isGithubLinked = false; // Would be determined from linked profiles
+  const isGoogleLinked = !!oauthProfiles?.google?.connected;
+  const isGithubLinked = !!oauthProfiles?.github?.connected;
 
   return (
     <div className="space-y-6">
@@ -97,51 +118,59 @@ export default function ProfileInfo() {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="bg-foreground/5 p-2 rounded-full">
-                  <FaGoogle className="h-5 w-5 text-red-500" />
-                </div>
-                <div>
-                  <div className="font-medium">Google</div>
-                  <div className="text-sm text-muted-foreground">
-                    {isGoogleLinked ? "Connected" : "Not connected"}
-                  </div>
-                </div>
+            {isLoading ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-              <Button 
-                variant={isGoogleLinked ? "outline" : "default"} 
-                size="sm"
-                asChild
-              >
-                <a href="/auth/google">
-                  {isGoogleLinked ? "Disconnect" : "Connect"}
-                </a>
-              </Button>
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-foreground/5 p-2 rounded-full">
+                      <FaGoogle className="h-5 w-5 text-red-500" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Google</div>
+                      <div className="text-sm text-muted-foreground">
+                        {isGoogleLinked ? "Connected" : "Not connected"}
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    variant={isGoogleLinked ? "outline" : "default"} 
+                    size="sm"
+                    asChild
+                  >
+                    <a href="/auth/google">
+                      {isGoogleLinked ? "Disconnect" : "Connect"}
+                    </a>
+                  </Button>
+                </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="bg-foreground/5 p-2 rounded-full">
-                  <FaGithub className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="font-medium">GitHub</div>
-                  <div className="text-sm text-muted-foreground">
-                    {isGithubLinked ? "Connected" : "Not connected"}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-foreground/5 p-2 rounded-full">
+                      <FaGithub className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="font-medium">GitHub</div>
+                      <div className="text-sm text-muted-foreground">
+                        {isGithubLinked ? "Connected" : "Not connected"}
+                      </div>
+                    </div>
                   </div>
+                  <Button 
+                    variant={isGithubLinked ? "outline" : "default"}
+                    size="sm"
+                    asChild
+                  >
+                    <a href="/auth/github">
+                      {isGithubLinked ? "Disconnect" : "Connect"}
+                    </a>
+                  </Button>
                 </div>
-              </div>
-              <Button 
-                variant={isGithubLinked ? "outline" : "default"}
-                size="sm"
-                asChild
-              >
-                <a href="/auth/github">
-                  {isGithubLinked ? "Disconnect" : "Connect"}
-                </a>
-              </Button>
-            </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -6,17 +6,26 @@ import {
   QueryFunction,
   QueryKey,
 } from "@tanstack/react-query";
-import { User } from "@shared/schema";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Client-side user type that matches what we get from the API
+type AuthUser = {
+  id: number;
+  email: string;
+  name?: string | null;
+  picture?: string | null;
+  createdAt?: string | null;
+  password: boolean;  // Only indicates if password exists, not the actual value
+};
+
 type AuthContextType = {
-  user: User | null;
+  user: AuthUser | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<User, Error, LoginData>;
+  loginMutation: UseMutationResult<AuthUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<User, Error, RegisterData>;
+  registerMutation: UseMutationResult<AuthUser, Error, RegisterData>;
 };
 
 type LoginData = {
@@ -34,7 +43,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
-  const queryFn: QueryFunction<User | null, QueryKey> = async ({ queryKey }) => {
+  const queryFn: QueryFunction<AuthUser | null, QueryKey> = async ({ queryKey }) => {
     const [url] = queryKey;
     try {
       const response = await fetch(url as string, { 
@@ -53,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
-  } = useQuery<User | null, Error>({
+  } = useQuery<AuthUser | null, Error>({
     queryKey: ["/api/user"],
     queryFn,
     retry: false,
@@ -64,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
-    onSuccess: (userData: User) => {
+    onSuccess: (userData: AuthUser) => {
       queryClient.setQueryData(["/api/user"], userData);
       toast({
         title: "Welcome back!",
@@ -85,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/register", userData);
       return await res.json();
     },
-    onSuccess: (userData: User) => {
+    onSuccess: (userData: AuthUser) => {
       queryClient.setQueryData(["/api/user"], userData);
       toast({
         title: "Account created",

@@ -373,7 +373,41 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
-    res.json({ id: req.user?.id, email: req.user?.email });
+    res.json({ 
+      id: req.user?.id, 
+      email: req.user?.email,
+      name: req.user?.name,
+      picture: req.user?.picture,
+      createdAt: req.user?.createdAt,
+      password: req.user?.password ? true : false // Only send if password exists, not the actual value
+    });
+  });
+  
+  // Get connected OAuth providers for current user
+  app.get("/api/user/oauth-profiles", ensureAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const profiles = await storage.getOAuthProfilesForUser(req.user.id);
+      
+      // Transform to a more convenient format for the frontend
+      const connectedProviders = profiles.reduce((acc, profile) => {
+        acc[profile.provider] = {
+          id: profile.id,
+          providerUserId: profile.providerUserId,
+          connected: true,
+          createdAt: profile.createdAt
+        };
+        return acc;
+      }, {} as Record<string, any>);
+      
+      res.json(connectedProviders);
+    } catch (error) {
+      console.error("Error fetching OAuth profiles:", error);
+      res.status(500).json({ message: "Failed to fetch connected providers" });
+    }
   });
 
   // OAuth routes
