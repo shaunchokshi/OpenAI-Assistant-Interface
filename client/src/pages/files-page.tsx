@@ -45,10 +45,10 @@ export default function FilesPage() {
   };
 
   return (
-    <div className="flex-1 p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">File Management</h2>
-        <Button className="flex items-center gap-2">
+    <div className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold">File Management</h2>
+        <Button className="flex items-center gap-2 w-full sm:w-auto">
           <Upload size={16} /> Upload Files
         </Button>
       </div>
@@ -113,33 +113,35 @@ export default function FilesPage() {
                 <Button onClick={() => refetch()}>Try Again</Button>
               </div>
             ) : (
-              <div className="grid gap-4">
-                {sampleFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gray-100 rounded">
-                        {getFileIcon(file.type)}
+              <div className="overflow-x-auto">
+                <div className="grid gap-4 min-w-[600px]">
+                  {sampleFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex flex-wrap sm:flex-nowrap items-center justify-between p-4 rounded-lg border hover:bg-accent/20"
+                    >
+                      <div className="flex items-center gap-3 w-full sm:w-auto mb-3 sm:mb-0">
+                        <div className="p-2 bg-primary/5 rounded shrink-0">
+                          {getFileIcon(file.type)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium truncate">{file.filename}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {file.size} • Uploaded on {file.date}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-medium">{file.filename}</h3>
-                        <p className="text-sm text-gray-500">
-                          {file.size} • Uploaded on {file.date}
-                        </p>
+                      <div className="flex gap-2 w-full sm:w-auto justify-end">
+                        <Button variant="ghost" size="sm" className="shrink-0">
+                          Download
+                        </Button>
+                        <Button variant="outline" size="sm" className="shrink-0">
+                          Delete
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
-                        Download
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </CardContent>
