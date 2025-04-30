@@ -12,6 +12,8 @@ import AuthPage from "./pages/auth-page";
 import SettingsPage from "./pages/settings-page";
 import FilesPage from "./pages/files-page";
 import AnalyticsPage from "./pages/analytics-page";
+import ChatPage from "./pages/chat-page";
+import UsersPage from "./pages/users-page";
 import NotFound from "./pages/not-found";
 
 // Auth Components
@@ -25,6 +27,8 @@ function Router() {
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/files" component={FilesPage} />
       <ProtectedRoute path="/analytics" component={AnalyticsPage} />
+      <ProtectedRoute path="/chat" component={ChatPage} />
+      <ProtectedRoute path="/users" component={UsersPage} />
       <Route path="/auth">
         <AuthPage />
       </Route>

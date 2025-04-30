@@ -23,14 +23,21 @@ const Sidebar = () => {
     return location === path;
   };
 
+  // Filter menu items based on user role
+  const isAdmin = user?.role === "admin" || user?.email === "test@example.com"; // Temporarily making test user an admin
+  
   const menuItems = [
     { path: "/", icon: <Home size={20} />, label: "Home" },
     { path: "/chat", icon: <MessageSquare size={20} />, label: "Chat" },
     { path: "/files", icon: <FileText size={20} />, label: "Files" },
     { path: "/analytics", icon: <BarChart2 size={20} />, label: "Analytics" },
-    { path: "/users", icon: <Users size={20} />, label: "Users" },
     { path: "/settings", icon: <Settings size={20} />, label: "Settings" },
   ];
+  
+  // Add admin-only items
+  if (isAdmin) {
+    menuItems.splice(4, 0, { path: "/users", icon: <Users size={20} />, label: "Users" });
+  }
 
   return (
     <div className="w-64 bg-gray-900 text-white h-full flex flex-col">

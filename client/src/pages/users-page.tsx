@@ -1,11 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { UserPlus, MoreHorizontal, Users } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 export default function UsersPage() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  
+  // Check if user is admin (temporary solution - assuming test@example.com is admin)
+  const isAdmin = user?.role === "admin" || user?.email === "test@example.com";
+  
+  // Redirect if not admin
+  useEffect(() => {
+    if (!isAdmin) {
+      setLocation("/");
+    }
+  }, [isAdmin, setLocation]);
   // Sample user data for demonstration
   const users = [
     { id: 1, name: "Test User", email: "test@example.com", role: "Admin", status: "Active", lastActive: "Today, 2:30 PM" },
