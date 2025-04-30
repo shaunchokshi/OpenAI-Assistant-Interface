@@ -42,6 +42,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
 
+  // User config endpoint - get information about user's configuration
+  app.get("/api/user/config", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      // Get the user from the database
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Get the user's assistants
+      const assistants = await storage.getUserAssistants(req.user.id);
+      
+      // Return only what's needed for configuration
+      return res.json({
+        hasApiKey: !!user.openaiKeyHash,
+        defaultAssistantId: user.defaultAssistantId,
+        assistantsCount: assistants.length
+      });
+    } catch (error) {
+      console.error("Error fetching user config:", error);
+      return res.status(500).json({ error: "Failed to fetch user configuration" });
+    }
+  });
+
   // Set up rate limiting
   const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -128,8 +156,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "User not authenticated" });
       }
       
+      // Get user to check default assistant
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Get assistants
       const assistants = await storage.getUserAssistants(req.user.id);
-      return res.json(assistants);
+      
+      // Add isDefault flag to each assistant
+      const assistantsWithDefault = assistants.map(assistant => ({
+        ...assistant,
+        isDefault: user.defaultAssistantId === assistant.id
+      }));
+      
+      return res.json(assistantsWithDefault);
     } catch (error) {
       console.error("Error fetching assistants:", error);
       return res.status(500).json({ error: "Failed to fetch assistants" });

@@ -26,6 +26,12 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Assistant } from "@shared/schema";
 
+// We need to extend the Assistant type to include the isDefault flag
+// that our backend adds
+interface AssistantWithDefault extends Assistant {
+  isDefault: boolean;
+}
+
 interface AssistantsListProps {
   onCreateNew: () => void;
 }
@@ -39,7 +45,7 @@ export function AssistantsList({ onCreateNew }: AssistantsListProps) {
     isLoading, 
     error, 
     refetch 
-  } = useQuery<Assistant[]>({
+  } = useQuery<AssistantWithDefault[]>({
     queryKey: ["/api/assistants"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/assistants");
