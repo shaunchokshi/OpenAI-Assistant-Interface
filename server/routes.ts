@@ -4,9 +4,10 @@ import fileUpload from "express-fileupload";
 import rateLimit from "express-rate-limit";
 import { setupAuth } from "./auth";
 import { cacheMiddleware } from "./cache";
-import { chatWithAssistant, initThread, uploadFiles } from "./openai";
+import { chatWithAssistant, initThread, uploadFiles, validateUserApiKey, createOpenAIClient } from "./openai";
 import { storage, hashApiKey } from "./storage";
 import { apiKeySchema, assistantSchema, updateAssistantSchema } from "@shared/schema";
+import fs from "fs";
 
 // Format uptime into human-readable string
 function formatUptime(uptime: number): string {
