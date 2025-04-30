@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { MessageSquare, FileText, Upload, Users, Settings } from "lucide-react";
+import { MessageSquare, FileText, Upload, Users, Settings, BarChart } from "lucide-react";
 
 export default function Sidebar() {
   const [location] = useLocation();
@@ -15,6 +15,11 @@ export default function Sidebar() {
       name: "Files",
       path: "/files",
       icon: FileText,
+    },
+    {
+      name: "Analytics",
+      path: "/analytics",
+      icon: BarChart,
     },
     {
       name: "Users",
