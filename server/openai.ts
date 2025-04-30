@@ -23,7 +23,7 @@ const LOG_DIR = "./logs";
 })();
 
 // Create a new OpenAI client for the user
-function createOpenAIClient(apiKey: string): OpenAI {
+export function createOpenAIClient(apiKey: string): OpenAI {
   return new OpenAI({
     apiKey: apiKey,
   });
@@ -46,7 +46,7 @@ async function logMessage(role: string, text: string) {
  * @param user User object from request
  * @returns Error message if no API key is set, null if valid
  */
-function validateUserApiKey(user: User): { error: string } | null {
+export function validateUserApiKey(user: User): { error: string } | null {
   if (!user.openaiKeyHash) {
     return { error: "Please set up your OpenAI API key in settings before using this feature" };
   }
