@@ -311,10 +311,10 @@ export function setupAuth(app: Express) {
       await storage.clearResetTimestamp(userId);
       
       res.status(200).json({ message: "Password has been updated successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Password update error:", error);
       
-      if (error.name === "ZodError") {
+      if (error?.name === "ZodError") {
         return res.status(400).json({ message: "Invalid reset data", errors: error.errors });
       }
       
