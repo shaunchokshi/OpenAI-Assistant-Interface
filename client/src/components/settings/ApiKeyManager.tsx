@@ -38,7 +38,7 @@ export default function ApiKeyManager() {
   // Mutation to update the user's API key
   const updateKeyMutation = useMutation({
     mutationFn: async (key: string) => {
-      const res = await apiRequest("POST", "/api/settings/apikey", { key });
+      const res = await apiRequest("POST", "/api/settings/apikey", { apiKey: key });
       return await res.json();
     },
     onSuccess: () => {
