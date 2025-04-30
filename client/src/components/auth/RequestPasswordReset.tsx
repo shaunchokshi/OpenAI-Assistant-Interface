@@ -1,102 +1,78 @@
-import React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
 
-const formSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-export function RequestPasswordReset() {
+export default function RequestPasswordReset() {
+  const [email, setEmail] = useState("");
   const { toast } = useToast();
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-    },
-  });
-  
-  const requestResetMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      const res = await apiRequest("POST", "/api/request-password-reset", values);
+
+  const resetRequestMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await apiRequest("POST", "/api/reset-password/request", { email });
       return await res.json();
     },
     onSuccess: () => {
       toast({
-        title: "Check your email",
-        description: "If that email exists in our system, we've sent a password reset link.",
+        title: "Reset email sent",
+        description: "If an account exists with that email, you'll receive reset instructions shortly.",
       });
-      form.reset();
+      setEmail("");
     },
     onError: (error: Error) => {
       toast({
-        title: "Request failed",
-        description: error.message || "Something went wrong. Please try again.",
+        title: "Reset request failed",
+        description: error.message || "Please try again later.",
         variant: "destructive",
       });
     },
   });
-  
-  function onSubmit(values: FormValues) {
-    requestResetMutation.mutate(values);
-  }
-  
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    resetRequestMutation.mutate(email);
+  };
+
   return (
-    <div className="space-y-4 max-w-md mx-auto">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Reset Your Password</h1>
-        <p className="text-muted-foreground mt-2">
-          Enter your email address and we'll send you a link to reset your password.
-        </p>
-      </div>
+    <div className="max-w-md mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Reset Your Password</h1>
+      <p className="mb-4">
+        Enter your email address and we'll send you a link to reset your password.
+      </p>
       
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="you@example.com" 
-                    type="email" 
-                    {...field} 
-                    disabled={requestResetMutation.isPending}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="reset-email" className="block text-sm font-medium mb-1">
+            Email Address
+          </label>
+          <input
+            id="reset-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full p-2 border rounded bg-[#dddddd] text-black"
+            placeholder="your@email.com"
           />
-          
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={requestResetMutation.isPending}
+        </div>
+        
+        <div className="flex flex-col gap-2">
+          <button
+            type="submit"
+            className="w-full py-2 px-4 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+            disabled={resetRequestMutation.isPending}
           >
-            {requestResetMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              "Send Reset Link"
-            )}
-          </Button>
-        </form>
-      </Form>
+            {resetRequestMutation.isPending ? "Sending..." : "Send Reset Link"}
+          </button>
+          
+          <a 
+            href="/auth" 
+            className="text-center text-sm text-primary hover:underline"
+          >
+            Back to login
+          </a>
+        </div>
+      </form>
     </div>
   );
 }

@@ -11,12 +11,22 @@ import HomePage from "./pages/home-page";
 import AuthPage from "./pages/auth-page";
 import NotFound from "./pages/not-found";
 
+// Auth Components
+import RequestPasswordReset from "./components/auth/RequestPasswordReset";
+import ResetPassword from "./components/auth/ResetPassword";
+
 function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
       <Route path="/auth">
         <AuthPage />
+      </Route>
+      <Route path="/request-reset-password">
+        <RequestPasswordReset />
+      </Route>
+      <Route path="/reset-password">
+        <ResetPassword />
       </Route>
       <Route>
         <NotFound />
