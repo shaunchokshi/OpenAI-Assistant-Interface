@@ -14,7 +14,13 @@ import {
   ChevronRight
 } from "lucide-react";
 
-const Sidebar = () => {
+interface SidebarProps {
+  collapsed?: boolean;
+  onToggle?: () => void;
+  isMobile?: boolean;
+}
+
+const Sidebar = ({ collapsed = false, onToggle, isMobile = false }: SidebarProps) => {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
 
@@ -42,44 +48,88 @@ const Sidebar = () => {
     menuItems.splice(4, 0, { path: "/users", icon: <Users size={20} />, label: "Users" });
   }
 
+  // Handle sidebar width based on collapsed state and if it's mobile
+  const sidebarWidth = collapsed ? "w-16" : "w-64";
+  const sidebarClass = isMobile && collapsed ? "hidden" : sidebarWidth;
+  
+  // If sidebar is mobile and expanded, add overlay
+  const mobileExpandedClass = isMobile && !collapsed ? "fixed inset-0 z-40" : "";
+  
   return (
-    <div className="w-64 bg-gray-900 text-white h-full flex flex-col">
-      <div className="p-5 border-b border-gray-800">
-        <h2 className="text-xl font-bold">OpenAI Assistant</h2>
-        <div className="text-sm mt-2 text-gray-400">
-          {user?.email}
+    <>
+      {/* Mobile overlay */}
+      {isMobile && !collapsed && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30" 
+          onClick={onToggle}
+        />
+      )}
+    
+      <div className={`${sidebarClass} ${mobileExpandedClass} bg-gray-900 text-white h-full flex flex-col transition-all duration-300 ease-in-out`}>
+        <div className="p-5 border-b border-gray-800 flex justify-between items-center">
+          {!collapsed ? (
+            <>
+              <div>
+                <h2 className="text-xl font-bold">OpenAI Assistant</h2>
+                <div className="text-sm mt-2 text-gray-400 truncate">
+                  {user?.email}
+                </div>
+              </div>
+              {onToggle && (
+                <button 
+                  onClick={onToggle} 
+                  className="p-1 rounded-md text-gray-400 hover:bg-gray-800 hover:text-white"
+                >
+                  {collapsed ? <ChevronRight size={20} /> : <X size={20} />}
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="w-full flex justify-center">
+              {onToggle && (
+                <button 
+                  onClick={onToggle} 
+                  className="p-1 rounded-md text-gray-400 hover:bg-gray-800 hover:text-white"
+                >
+                  <Menu size={20} />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        
+        <nav className="flex-1 overflow-y-auto">
+          <ul className={collapsed ? "p-2" : "p-3"}>
+            {menuItems.map((item) => (
+              <li key={item.path} className="mb-1">
+                <Link href={item.path}>
+                  <div
+                    className={`flex items-center ${collapsed ? 'justify-center' : ''} p-3 rounded-md transition-colors cursor-pointer ${
+                      isActive(item.path)
+                        ? "bg-primary text-white"
+                        : "text-gray-300 hover:bg-gray-800"
+                    }`}
+                  >
+                    <span className={collapsed ? "" : "mr-3"}>{item.icon}</span>
+                    {!collapsed && <span>{item.label}</span>}
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        
+        <div className="p-3 border-t border-gray-800">
+          <button
+            onClick={handleLogout}
+            className={`flex items-center ${collapsed ? 'justify-center' : ''} w-full p-3 text-gray-300 hover:bg-gray-800 rounded-md transition-colors`}
+          >
+            <LogOut size={20} className={collapsed ? "" : "mr-3"} />
+            {!collapsed && <span>Logout</span>}
+          </button>
         </div>
       </div>
-      <nav className="flex-1 overflow-y-auto">
-        <ul className="p-2">
-          {menuItems.map((item) => (
-            <li key={item.path} className="mb-1">
-              <Link href={item.path}>
-                <div
-                  className={`flex items-center p-3 rounded-md transition-colors cursor-pointer ${
-                    isActive(item.path)
-                      ? "bg-primary text-white"
-                      : "text-gray-300 hover:bg-gray-800"
-                  }`}
-                >
-                  <span className="mr-3">{item.icon}</span>
-                  <span>{item.label}</span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="p-4 border-t border-gray-800">
-        <button
-          onClick={handleLogout}
-          className="flex items-center w-full p-3 text-gray-300 hover:bg-gray-800 rounded-md transition-colors"
-        >
-          <LogOut size={20} className="mr-3" />
-          <span>Logout</span>
-        </button>
-      </div>
-    </div>
+    </>
   );
 };
 

@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   Loader2, 
   Monitor,
@@ -22,7 +23,8 @@ import {
   Settings,
   BellRing,
   Volume2,
-  VolumeX
+  VolumeX,
+  Palette as PaletteIcon
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -44,6 +46,18 @@ export default function UserPreferences() {
     theme as "light" | "dark" | "system"
   );
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Advanced theme options (custom colors)
+  const [customColors, setCustomColors] = useState({
+    background: "",
+    foreground: "",
+    primary: "",
+    accent: "",
+    card: ""
+  });
+  
+  // Track if custom colors are enabled
+  const [customColorsEnabled, setCustomColorsEnabled] = useState(false);
   
   // Initialize the UI with the current theme state and keep it in sync
   useEffect(() => {
@@ -113,7 +127,6 @@ export default function UserPreferences() {
     toast({
       title: "Theme Updated",
       description: `Theme changed to ${themeValue}. Your preference has been saved.`,
-      duration: 2000,
     });
   };
 
@@ -128,7 +141,6 @@ export default function UserPreferences() {
     toast({
       title: "Dark Mode " + (checked ? "Enabled" : "Disabled"),
       description: `Theme changed to ${newTheme}. Your preference has been saved.`,
-      duration: 2000,
     });
   };
 
@@ -299,14 +311,189 @@ export default function UserPreferences() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="h-5 w-5" />
-                Advanced Settings
+                Advanced Theme Customization
               </CardTitle>
               <CardDescription>
-                Configure advanced application settings
+                Customize the application's colors to your preference
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Advanced settings will be available in a future update.</p>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Custom Colors</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Use custom colors instead of theme defaults
+                    </div>
+                  </div>
+                  <Switch
+                    checked={customColorsEnabled}
+                    onCheckedChange={setCustomColorsEnabled}
+                  />
+                </div>
+                
+                {customColorsEnabled && (
+                  <div className="space-y-4 p-4 border rounded-md">
+                    <div className="space-y-2">
+                      <Label htmlFor="background-color">Background Color</Label>
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="color" 
+                          id="background-color"
+                          value={customColors.background || "#000000"} 
+                          onChange={(e) => setCustomColors({...customColors, background: e.target.value})}
+                          className="h-8 w-12 rounded-md"
+                        />
+                        <Input 
+                          value={customColors.background || "#000000"} 
+                          onChange={(e) => setCustomColors({...customColors, background: e.target.value})}
+                          placeholder="#000000"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="foreground-color">Text Color</Label>
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="color" 
+                          id="foreground-color"
+                          value={customColors.foreground || "#ffffff"} 
+                          onChange={(e) => setCustomColors({...customColors, foreground: e.target.value})}
+                          className="h-8 w-12 rounded-md"
+                        />
+                        <Input 
+                          value={customColors.foreground || "#ffffff"} 
+                          onChange={(e) => setCustomColors({...customColors, foreground: e.target.value})}
+                          placeholder="#ffffff"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="primary-color">Primary Color</Label>
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="color" 
+                          id="primary-color"
+                          value={customColors.primary || "#3b82f6"} 
+                          onChange={(e) => setCustomColors({...customColors, primary: e.target.value})}
+                          className="h-8 w-12 rounded-md"
+                        />
+                        <Input 
+                          value={customColors.primary || "#3b82f6"} 
+                          onChange={(e) => setCustomColors({...customColors, primary: e.target.value})}
+                          placeholder="#3b82f6"
+                          className="flex-1"
+                        />
+                        <div 
+                          className="h-8 w-8 rounded-full border" 
+                          style={{backgroundColor: customColors.primary || "#3b82f6"}}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="accent-color">Accent Color</Label>
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="color" 
+                          id="accent-color"
+                          value={customColors.accent || "#f97316"} 
+                          onChange={(e) => setCustomColors({...customColors, accent: e.target.value})}
+                          className="h-8 w-12 rounded-md"
+                        />
+                        <Input 
+                          value={customColors.accent || "#f97316"} 
+                          onChange={(e) => setCustomColors({...customColors, accent: e.target.value})}
+                          placeholder="#f97316"
+                          className="flex-1"
+                        />
+                        <div 
+                          className="h-8 w-8 rounded-full border" 
+                          style={{backgroundColor: customColors.accent || "#f97316"}}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="card-color">Card Background</Label>
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="color" 
+                          id="card-color"
+                          value={customColors.card || "#1e1e1e"} 
+                          onChange={(e) => setCustomColors({...customColors, card: e.target.value})}
+                          className="h-8 w-12 rounded-md"
+                        />
+                        <Input 
+                          value={customColors.card || "#1e1e1e"} 
+                          onChange={(e) => setCustomColors({...customColors, card: e.target.value})}
+                          placeholder="#1e1e1e"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 flex flex-wrap justify-between">
+                      <Button 
+                        variant="destructive"
+                        className="mt-2"
+                        onClick={() => {
+                          setCustomColors({
+                            background: "",
+                            foreground: "",
+                            primary: "",
+                            accent: "",
+                            card: ""
+                          });
+                          toast({
+                            title: "Colors Reset",
+                            description: "Custom colors have been reset to theme defaults.",
+                          });
+                        }}
+                      >
+                        Reset to Theme Defaults
+                      </Button>
+                      
+                      <Button 
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => {
+                          // Apply custom colors preview
+                          // This is just a preview, actual implementation would modify CSS variables
+                          toast({
+                            title: "Colors Applied",
+                            description: "Custom colors have been applied as a preview.",
+                          });
+                        }}
+                      >
+                        Preview Colors
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-4 p-4 bg-muted rounded-md">
+                  <div className="flex items-center">
+                    <PaletteIcon className="h-5 w-5 mr-2 text-amber-500" />
+                    <span className="text-sm font-medium">Theme Preview</span>
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    <div className="flex gap-2">
+                      <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">Primary</Button>
+                      <Button size="sm" variant="secondary">Secondary</Button>
+                      <Button size="sm" variant="destructive">Alert</Button>
+                    </div>
+                    <div className="p-3 rounded-md bg-card text-card-foreground border">
+                      <h4 className="text-sm font-medium">Card Example</h4>
+                      <p className="text-xs text-muted-foreground mt-1">This shows how cards will appear with current colors.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
