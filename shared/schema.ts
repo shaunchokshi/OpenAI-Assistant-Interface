@@ -93,6 +93,23 @@ export const userSessions = pgTable("user_sessions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const usageAnalytics = pgTable("usage_analytics", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  assistantId: integer("assistant_id").references(() => assistants.id, { onDelete: "set null" }),
+  threadId: integer("thread_id").references(() => threads.id, { onDelete: "set null" }),
+  modelId: varchar("model_id", { length: 50 }).notNull(),
+  promptTokens: integer("prompt_tokens").notNull().default(0),
+  completionTokens: integer("completion_tokens").notNull().default(0),
+  totalTokens: integer("total_tokens").notNull().default(0),
+  estimatedCost: doublePrecision("estimated_cost").notNull().default(0),
+  requestType: varchar("request_type", { length: 50 }).notNull().default("chat"), // chat, completion, embedding, etc.
+  success: boolean("success").notNull().default(true),
+  errorMessage: text("error_message"),
+  metadata: json("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schemas for inserts and validation
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -133,6 +150,11 @@ export const apiKeySchema = z.object({
   apiKey: z.string().min(1, "API Key is required")
 });
 
+export const usageAnalyticsSchema = createInsertSchema(usageAnalytics, {
+  id: undefined,
+  createdAt: undefined
+});
+
 // Types
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -141,6 +163,7 @@ export type InsertAssistant = z.infer<typeof assistantSchema>;
 export type UpdateAssistant = z.infer<typeof updateAssistantSchema>;
 export type ApiKeyUpdate = z.infer<typeof apiKeySchema>;
 export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+export type InsertUsageAnalytic = z.infer<typeof usageAnalyticsSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Assistant = typeof assistants.$inferSelect;
@@ -150,3 +173,4 @@ export type File = typeof files.$inferSelect;
 export type OAuthProfile = typeof oauthProfiles.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type UserSession = typeof userSessions.$inferSelect;
+export type UsageAnalytic = typeof usageAnalytics.$inferSelect;
