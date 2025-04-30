@@ -98,6 +98,12 @@ export const userSessions = pgTable("user_sessions", {
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
+  name: true,
+  picture: true,
+}).partial({
+  password: true,
+  name: true,
+  picture: true,
 });
 
 export const loginUserSchema = z.object({
