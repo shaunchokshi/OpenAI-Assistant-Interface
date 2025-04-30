@@ -81,6 +81,34 @@ export interface IStorage {
   getAssistantFiles(assistantId: number): Promise<File[]>;
   deleteFile(id: number): Promise<void>;
   
+  // Usage Analytics
+  trackUsage(usageData: InsertUsageAnalytic): Promise<UsageAnalytic>;
+  getUserUsageAnalytics(userId: number, options?: {
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+    offset?: number;
+  }): Promise<UsageAnalytic[]>;
+  getUserUsageSummary(userId: number, options?: {
+    startDate?: Date;
+    endDate?: Date;
+    groupBy?: 'day' | 'week' | 'month';
+  }): Promise<{
+    totalRequests: number;
+    totalTokens: number;
+    totalCost: number;
+    periodSummaries: Array<{
+      period: string;
+      requests: number;
+      tokens: number;
+      cost: number;
+      models: Record<string, {
+        tokens: number;
+        cost: number;
+      }>;
+    }>;
+  }>;
+  
   // Session store
   sessionStore: session.Store;
 }
