@@ -24,6 +24,7 @@ function Router() {
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/files" component={FilesPage} />
+      <ProtectedRoute path="/analytics" component={AnalyticsPage} />
       <Route path="/auth">
         <AuthPage />
       </Route>

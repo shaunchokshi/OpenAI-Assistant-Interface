@@ -60,40 +60,41 @@ export default function AnalyticsPage() {
   
   // Calculate date range based on the selected timeRange
   const getDateRange = () => {
-    const endDate = new Date();
-    let startDate = new Date();
+    const end = new Date();
+    let start = new Date();
     
     switch (timeRange) {
       case "7d":
-        startDate.setDate(endDate.getDate() - 7);
+        start.setDate(end.getDate() - 7);
         break;
       case "30d":
-        startDate.setDate(endDate.getDate() - 30);
+        start.setDate(end.getDate() - 30);
         break;
       case "90d":
-        startDate.setDate(endDate.getDate() - 90);
+        start.setDate(end.getDate() - 90);
         break;
       case "1y":
-        startDate.setFullYear(endDate.getFullYear() - 1);
+        start.setFullYear(end.getFullYear() - 1);
         break;
       case "custom":
         if (date) {
           // When using a custom date, show 30 days from the selected date
-          startDate = new Date(date);
-          endDate = new Date(date);
-          endDate.setDate(startDate.getDate() + 30);
+          start = new Date(date);
+          const customEnd = new Date(date);
+          customEnd.setDate(start.getDate() + 30);
+          return { start, end: customEnd };
         } else {
-          startDate.setDate(endDate.getDate() - 30);
+          start.setDate(end.getDate() - 30);
         }
         break;
       default:
-        startDate.setDate(endDate.getDate() - 7);
+        start.setDate(end.getDate() - 7);
     }
     
-    return { startDate, endDate };
+    return { start, end };
   };
   
-  const { startDate, endDate } = getDateRange();
+  const { start: startDate, end: endDate } = getDateRange();
   
   // Fetch summary data for charts
   const { data: summaryData, isLoading: summaryLoading } = useQuery({
