@@ -28,10 +28,10 @@ export default function UsersPage() {
   ];
 
   return (
-    <div className="flex-1 p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">User Management</h2>
-        <Button className="flex items-center gap-2">
+    <div className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold">User Management</h2>
+        <Button className="flex items-center gap-2 w-full sm:w-auto">
           <UserPlus size={16} /> Add User
         </Button>
       </div>
@@ -93,43 +93,73 @@ export default function UsersPage() {
               Manage user accounts and permissions
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Active</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
+          <CardContent className="p-0 sm:p-6">
+            <div className="overflow-x-auto">
+              <Table className="min-w-[650px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden md:table-cell">Last Active</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell className="max-w-[120px] truncate">{user.email}</TableCell>
+                      <TableCell>
+                        <Badge variant={user.role === "Admin" ? "default" : user.role === "Editor" ? "outline" : "secondary"}>
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.status === "Active" ? "default" : "destructive"}>
+                          {user.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm hidden md:table-cell">{user.lastActive}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* Mobile card view (visible on smaller screens) */}
+            <div className="md:hidden space-y-4 p-4">
+              {users.map((user) => (
+                <Card key={user.id} className="p-0 overflow-hidden">
+                  <CardContent className="p-4 pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
                       <Badge variant={user.role === "Admin" ? "default" : user.role === "Editor" ? "outline" : "secondary"}>
                         {user.role}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
                       <Badge variant={user.status === "Active" ? "default" : "destructive"}>
                         {user.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-gray-500 text-sm">{user.lastActive}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <span className="text-xs text-muted-foreground ml-auto">{user.lastActive}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
