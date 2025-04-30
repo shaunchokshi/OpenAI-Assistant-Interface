@@ -11,6 +11,7 @@ import HomePage from "./pages/home-page";
 import AuthPage from "./pages/auth-page";
 import SettingsPage from "./pages/settings-page";
 import FilesPage from "./pages/files-page";
+import AnalyticsPage from "./pages/analytics-page";
 import NotFound from "./pages/not-found";
 
 // Auth Components
