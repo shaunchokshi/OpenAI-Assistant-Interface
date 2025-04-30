@@ -2,13 +2,13 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Express, Request } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { scrypt, randomBytes, timingSafeEqual, createHash } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as UserType, LoginUser, InsertUser } from "@shared/schema";
-import { sendTempPassword } from "./email";
+import { User as UserType, LoginUser, InsertUser, resetPasswordSchema } from "@shared/schema";
+import { sendTempPassword, sendPasswordResetLink } from "./email";
 
 declare global {
   namespace Express {
@@ -214,8 +214,46 @@ export function setupAuth(app: Express) {
     (req, res) => res.redirect("/")
   );
 
-  // Password reset
-  app.post("/api/reset-password", async (req, res) => {
+  // Create a token for password reset requests
+  function generateResetToken(userId: number, email: string): string {
+    // Create a unique token based on userId, email and a timestamp
+    // Format: sha256(userId + email + timestamp + SECRET)
+    const timestamp = Date.now();
+    const tokenData = `${userId}:${email}:${timestamp}:${process.env.SESSION_SECRET}`;
+    return createHash('sha256').update(tokenData).digest('hex');
+  }
+
+  // Verify a reset token
+  async function verifyResetToken(token: string, userId: number): Promise<boolean> {
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) return false;
+      
+      // Check if reset was requested in the last hour
+      if (!user.resetAt) return false;
+      
+      const resetTime = new Date(user.resetAt).getTime();
+      const now = Date.now();
+      
+      // Token valid for 1 hour
+      if (now - resetTime > 60 * 60 * 1000) return false;
+      
+      // Regenerate token and compare
+      const expectedToken = generateResetToken(userId, user.email);
+      
+      // Use constant time comparison to prevent timing attacks
+      return timingSafeEqual(
+        Buffer.from(token), 
+        Buffer.from(expectedToken)
+      );
+    } catch (error) {
+      console.error('Error verifying reset token:', error);
+      return false;
+    }
+  }
+
+  // Request password reset - sends a link with a token
+  app.post("/api/request-password-reset", async (req, res) => {
     try {
       const { email } = req.body;
       
@@ -226,9 +264,73 @@ export function setupAuth(app: Express) {
         return res.status(200).json({ message: "If that email exists, a reset link has been sent." });
       }
 
-      // Throttle: allow reset once per 24h
-      if (user.resetAt && new Date().getTime() - new Date(user.resetAt).getTime() < 24 * 3600 * 1000) {
-        return res.status(429).json({ message: "Reset allowed once per 24 hours" });
+      // Throttle: allow reset request once per hour
+      if (user.resetAt && new Date().getTime() - new Date(user.resetAt).getTime() < 60 * 60 * 1000) {
+        return res.status(429).json({ message: "Please wait before requesting another reset" });
+      }
+
+      // Update reset timestamp
+      await storage.updateResetTimestamp(user.id);
+      
+      // Generate token
+      const resetToken = generateResetToken(user.id, user.email);
+      
+      // Create reset link
+      const baseUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 5000}`;
+      const resetLink = `${baseUrl}/reset-password?userId=${user.id}&token=${resetToken}`;
+      
+      // Send email with reset link
+      await sendPasswordResetLink(email, resetToken, resetLink);
+      
+      res.status(200).json({ message: "If that email exists, a reset link has been sent." });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ message: "Server error during password reset" });
+    }
+  });
+  
+  // Verify reset token and set new password
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      // Validate with resetPasswordSchema
+      const { userId, token, newPassword } = resetPasswordSchema.parse(req.body);
+      
+      // Verify the token
+      const isValidToken = await verifyResetToken(token, userId);
+      if (!isValidToken) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+      
+      // Hash the new password
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Update the password
+      await storage.updateUserPassword(userId, hashedPassword);
+      
+      // Clear the reset timestamp
+      await storage.clearResetTimestamp(userId);
+      
+      res.status(200).json({ message: "Password has been updated successfully" });
+    } catch (error) {
+      console.error("Password update error:", error);
+      
+      if (error.name === "ZodError") {
+        return res.status(400).json({ message: "Invalid reset data", errors: error.errors });
+      }
+      
+      res.status(500).json({ message: "Server error during password reset" });
+    }
+  });
+  
+  // Legacy password reset with temporary password (for admin-created accounts)
+  app.post("/api/admin/reset-password", ensureAuthenticated, async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
 
       // Generate temporary password
@@ -241,7 +343,7 @@ export function setupAuth(app: Express) {
       // Send email with temporary password
       await sendTempPassword(email, tempPassword);
       
-      res.status(200).json({ message: "If that email exists, a reset link has been sent." });
+      res.status(200).json({ message: "Temporary password has been sent" });
     } catch (error) {
       console.error("Password reset error:", error);
       res.status(500).json({ message: "Server error during password reset" });
