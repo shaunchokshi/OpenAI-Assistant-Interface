@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { 
@@ -8,7 +8,10 @@ import {
   BarChart2, 
   MessageSquare,
   Users,
-  LogOut
+  LogOut,
+  Menu,
+  X,
+  ChevronRight
 } from "lucide-react";
 
 const Sidebar = () => {
