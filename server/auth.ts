@@ -7,7 +7,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual, createHash } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as UserType, LoginUser, InsertUser, resetPasswordSchema } from "@shared/schema";
+import { User as UserType, LoginUser, InsertUser, resetPasswordSchema, requestPasswordResetSchema } from "@shared/schema";
 import { sendTempPassword, sendPasswordResetLink } from "./email";
 
 declare global {
@@ -255,7 +255,8 @@ export function setupAuth(app: Express) {
   // Request password reset - sends a link with a token
   app.post("/api/request-password-reset", async (req, res) => {
     try {
-      const { email } = req.body;
+      // Validate the email
+      const { email } = requestPasswordResetSchema.parse(req.body);
       
       // Check if user exists
       const user = await storage.getUserByEmail(email);
@@ -283,8 +284,13 @@ export function setupAuth(app: Express) {
       await sendPasswordResetLink(email, resetToken, resetLink);
       
       res.status(200).json({ message: "If that email exists, a reset link has been sent." });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Password reset error:", error);
+      
+      if (error?.name === "ZodError") {
+        return res.status(400).json({ message: "Invalid email", errors: error.errors });
+      }
+      
       res.status(500).json({ message: "Server error during password reset" });
     }
   });
