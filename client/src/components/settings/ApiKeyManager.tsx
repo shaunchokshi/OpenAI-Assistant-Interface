@@ -50,8 +50,11 @@ export default function ApiKeyManager() {
         description: "Your OpenAI API key has been securely stored.",
       });
       
-      // Clear the input field
-      setApiKey("");
+      // We'll keep the API key visible for user confirmation
+      // but we'll set a timeout to clear it after a few seconds
+      setTimeout(() => {
+        setApiKey("");
+      }, 3000);
     },
     onError: (error: Error) => {
       toast({
