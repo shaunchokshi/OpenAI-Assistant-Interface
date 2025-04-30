@@ -4,6 +4,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import SessionsManager from "@/components/settings/SessionsManager";
 import ProfileInfo from "@/components/settings/ProfileInfo";
 import ApiKeyManager from "@/components/settings/ApiKeyManager";
+import UserPreferences from "@/components/settings/UserPreferences";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -76,7 +77,7 @@ export default function SettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">Preference settings coming soon</p>
+                    <UserPreferences />
                   </CardContent>
                 </Card>
               </TabsContent>
