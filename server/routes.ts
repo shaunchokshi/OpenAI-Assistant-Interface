@@ -595,6 +595,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics endpoints
+  
+  // Get detailed usage analytics with filtering options
+  app.get("/api/analytics/usage", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const { startDate, endDate, limit, offset } = req.query;
+      
+      const options: any = {};
+      
+      if (startDate) {
+        options.startDate = new Date(startDate as string);
+      }
+      
+      if (endDate) {
+        options.endDate = new Date(endDate as string);
+      }
+      
+      if (limit) {
+        options.limit = parseInt(limit as string);
+      }
+      
+      if (offset) {
+        options.offset = parseInt(offset as string);
+      }
+      
+      const usageData = await storage.getUserUsageAnalytics(req.user.id, options);
+      
+      res.status(200).json(usageData);
+    } catch (error: any) {
+      console.error("Error fetching usage analytics:", error);
+      res.status(500).json({ error: "Failed to fetch usage analytics" });
+    }
+  });
+  
+  // Get summarized usage analytics with grouping options
+  app.get("/api/analytics/summary", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const { startDate, endDate, groupBy } = req.query;
+      
+      const options: any = {};
+      
+      if (startDate) {
+        options.startDate = new Date(startDate as string);
+      }
+      
+      if (endDate) {
+        options.endDate = new Date(endDate as string);
+      }
+      
+      if (groupBy && ['day', 'week', 'month'].includes(groupBy as string)) {
+        options.groupBy = groupBy;
+      }
+      
+      const summary = await storage.getUserUsageSummary(req.user.id, options);
+      
+      res.status(200).json(summary);
+    } catch (error: any) {
+      console.error("Error fetching usage summary:", error);
+      res.status(500).json({ error: "Failed to fetch usage summary" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

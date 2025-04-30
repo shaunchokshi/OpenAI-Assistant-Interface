@@ -6,6 +6,7 @@ import { Request, Response } from "express";
 import { storage } from "./storage";
 import { User, Assistant } from "@shared/schema";
 import { logger } from "./logger";
+import { trackApiUsage, extractTokenUsage } from "./analytics";
 
 // Fallback assistant ID - will only be used if user has no default and none is specified
 const DEFAULT_ASSISTANT_ID = process.env.ASSISTANT_ID;
@@ -250,12 +251,57 @@ export async function chatWithAssistant(req: Request, res: Response) {
       }
     }
     
+    // Track API usage for analytics
+    try {
+      // Extract token usage from run
+      const usage = status.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      
+      // Track with our analytics system
+      await trackApiUsage(
+        user.id,
+        "chat_completion",
+        assistantId.includes("asst_") ? "gpt-4o" : assistantId, // Use model from assistant or default to latest
+        usage.prompt_tokens,
+        usage.completion_tokens,
+        thread.assistantId || undefined,
+        threadId,
+        true,
+        undefined,
+        { runId: run.id }
+      );
+    } catch (analyticsError) {
+      // Don't let analytics errors affect the main functionality
+      logger.error("Error tracking API usage:", analyticsError);
+    }
+    
     res.json({ 
       threadId,
       content: responseContent
     });
     
   } catch (err: any) {
+    // Track failed requests too
+    try {
+      const user = req.user as User;
+      if (user?.id) {
+        const { threadId } = req.body;
+        const thread = await storage.getThread(threadId);
+        
+        await trackApiUsage(
+          user.id,
+          "chat_completion",
+          "unknown", // We don't know the model for failed requests
+          0, 0,      // We don't have token counts for failed requests
+          thread?.assistantId || undefined,
+          threadId,
+          false,
+          err.message
+        );
+      }
+    } catch (analyticsError) {
+      logger.error("Error tracking failed API usage:", analyticsError);
+    }
+    
     logger.error("Error chatting with assistant:", err);
     res.status(500).json({ error: err.message });
   }

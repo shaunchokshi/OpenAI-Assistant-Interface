@@ -562,31 +562,33 @@ export class DatabaseStorage implements IStorage {
     limit?: number;
     offset?: number;
   }): Promise<UsageAnalytic[]> {
-    let query = db
-      .select()
-      .from(usageAnalytics)
-      .where(eq(usageAnalytics.userId, userId));
+    // Start with base conditions
+    let conditions = eq(usageAnalytics.userId, userId);
     
     if (options?.startDate) {
-      query = query.where(
+      conditions = and(
+        conditions,
         gte(usageAnalytics.createdAt, options.startDate)
       );
     }
     
     if (options?.endDate) {
-      query = query.where(
+      conditions = and(
+        conditions,
         lte(usageAnalytics.createdAt, options.endDate)
       );
     }
     
-    query = query.orderBy(desc(usageAnalytics.createdAt));
+    // Build query with all options
+    const query = db
+      .select()
+      .from(usageAnalytics)
+      .where(conditions)
+      .orderBy(desc(usageAnalytics.createdAt));
     
+    // Apply pagination if provided
     if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    
-    if (options?.offset) {
-      query = query.offset(options.offset);
+      return await query.limit(options.limit).offset(options?.offset || 0);
     }
     
     return await query;
