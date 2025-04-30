@@ -34,6 +34,9 @@ export default function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem className="cursor-pointer" asChild>
+                <a href="/settings">Settings</a>
+              </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
                 Logout
               </DropdownMenuItem>
