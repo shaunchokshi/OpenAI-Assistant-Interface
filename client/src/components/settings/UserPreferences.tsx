@@ -33,17 +33,33 @@ export default function UserPreferences() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   
-  // These would eventually come from an API call to get user preferences
-  const [darkMode, setDarkMode] = useState(theme === "dark");
+  // Get current theme preferences from the theme provider
+  const [darkMode, setDarkMode] = useState(
+    theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+  );
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [selectedTheme, setSelectedTheme] = useState<string>(theme);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize the UI with the current theme state
+  // Initialize the UI with the current theme state and keep it in sync
   useEffect(() => {
-    setDarkMode(theme === "dark");
+    const isDark = theme === "dark" || 
+      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    
+    setDarkMode(isDark);
     setSelectedTheme(theme);
+    
+    // Add a media query listener for system theme changes
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleChange = (e: MediaQueryListEvent) => {
+        setDarkMode(e.matches);
+      };
+      
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
   }, [theme]);
   
   // For demonstration purposes, simulate saving preferences
@@ -52,8 +68,8 @@ export default function UserPreferences() {
       // This would be an actual API call in the real implementation
       setIsLoading(true);
       
-      // Apply the theme changes immediately on save
-      setTheme(preferences.theme as "light" | "dark" | "system");
+      // Note: We already apply theme changes immediately when they occur
+      // so we don't need to do it again here
       
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -79,9 +95,21 @@ export default function UserPreferences() {
   });
 
   const handleThemeChange = (value: string) => {
-    setSelectedTheme(value);
+    const themeValue = value as "light" | "dark" | "system";
+    setSelectedTheme(themeValue);
     // Apply theme immediately for better user experience
-    setTheme(value as "light" | "dark" | "system");
+    setTheme(themeValue);
+    
+    // Update dark mode state to match
+    setDarkMode(themeValue === "dark" || (themeValue === "system" && 
+      window.matchMedia("(prefers-color-scheme: dark)").matches));
+      
+    // Show success toast
+    toast({
+      title: "Theme Updated",
+      description: `Theme changed to ${themeValue}. Your preference has been saved.`,
+      duration: 2000,
+    });
   };
 
   const handleToggleDarkMode = (checked: boolean) => {
@@ -90,6 +118,13 @@ export default function UserPreferences() {
     const newTheme = checked ? "dark" : "light";
     setSelectedTheme(newTheme);
     setTheme(newTheme);
+    
+    // Show success toast
+    toast({
+      title: "Dark Mode " + (checked ? "Enabled" : "Disabled"),
+      description: `Theme changed to ${newTheme}. Your preference has been saved.`,
+      duration: 2000,
+    });
   };
 
   const handleToggleNotifications = (checked: boolean) => {
