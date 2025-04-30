@@ -8,6 +8,7 @@ import { chatWithAssistant, initThread, uploadFiles, validateUserApiKey, createO
 import { storage, hashApiKey } from "./storage";
 import { apiKeySchema, assistantSchema, updateAssistantSchema } from "@shared/schema";
 import fs from "fs";
+import { logger } from "./logger";
 
 // Format uptime into human-readable string
 function formatUptime(uptime: number): string {
@@ -42,6 +43,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up authentication
   setupAuth(app);
+
+  // User sessions endpoint - get user's active sessions
+  app.get("/api/user/sessions", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      // Get sessions from the database
+      const sessions = await storage.getUserSessions(req.user.id);
+      
+      // Mark the current session
+      const currentSessionId = req.sessionID;
+      const sessionsWithCurrent = sessions.map(session => ({
+        ...session,
+        isCurrent: session.sessionId === currentSessionId
+      }));
+      
+      return res.json(sessionsWithCurrent);
+    } catch (error) {
+      logger.error(`Error fetching user sessions: ${error}`);
+      return res.status(500).json({ error: "Failed to fetch sessions" });
+    }
+  });
+  
+  // Terminate specific session
+  app.delete("/api/user/sessions/:id", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const sessionId = parseInt(req.params.id);
+      if (isNaN(sessionId)) {
+        return res.status(400).json({ error: "Invalid session ID" });
+      }
+      
+      await storage.terminateUserSession(sessionId);
+      return res.json({ message: "Session terminated successfully" });
+    } catch (error) {
+      logger.error(`Error terminating session: ${error}`);
+      return res.status(500).json({ error: "Failed to terminate session" });
+    }
+  });
+  
+  // Terminate all sessions except current
+  app.delete("/api/user/sessions", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      await storage.terminateAllUserSessions(req.user.id, req.sessionID);
+      return res.json({ message: "All other sessions terminated successfully" });
+    } catch (error) {
+      logger.error(`Error terminating all sessions: ${error}`);
+      return res.status(500).json({ error: "Failed to terminate sessions" });
+    }
+  });
 
   // User config endpoint - get information about user's configuration
   app.get("/api/user/config", ensureAuthenticated, async (req: Request, res: Response) => {

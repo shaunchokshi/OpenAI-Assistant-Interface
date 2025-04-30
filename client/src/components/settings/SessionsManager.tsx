@@ -22,6 +22,27 @@ export default function SessionsManager() {
   const { data: sessions, isLoading, error } = useQuery<Session[]>({
     queryKey: ["/api/user/sessions"],
     staleTime: 60000, // 1 minute
+    queryFn: async () => {
+      // Sample session data for demonstration until backend is fully implemented
+      return [
+        {
+          id: 1,
+          userAgent: navigator.userAgent,
+          ipAddress: "127.0.0.1",
+          lastActive: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          isCurrent: true
+        },
+        {
+          id: 2,
+          userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Mobile/15E148 Safari/604.1",
+          ipAddress: "192.168.1.5",
+          lastActive: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
+          isCurrent: false
+        }
+      ];
+    }
   });
   
   const terminateSessionMutation = useMutation({
