@@ -1,59 +1,76 @@
+import React from "react";
 import { Link, useLocation } from "wouter";
-import { cn } from "@/lib/utils";
-import { MessageSquare, FileText, Upload, Users, Settings, BarChart } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { 
+  Home, 
+  Settings, 
+  FileText, 
+  BarChart2, 
+  MessageSquare,
+  Users,
+  LogOut
+} from "lucide-react";
 
-export default function Sidebar() {
+const Sidebar = () => {
   const [location] = useLocation();
+  const { user, logoutMutation } = useAuth();
 
-  const navItems = [
-    {
-      name: "Chat",
-      path: "/",
-      icon: MessageSquare,
-    },
-    {
-      name: "Files",
-      path: "/files",
-      icon: FileText,
-    },
-    {
-      name: "Analytics",
-      path: "/analytics",
-      icon: BarChart,
-    },
-    {
-      name: "Users",
-      path: "/users",
-      icon: Users,
-    },
-    {
-      name: "Settings",
-      path: "/settings",
-      icon: Settings,
-    },
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  const isActive = (path: string) => {
+    return location === path;
+  };
+
+  const menuItems = [
+    { path: "/", icon: <Home size={20} />, label: "Home" },
+    { path: "/chat", icon: <MessageSquare size={20} />, label: "Chat" },
+    { path: "/files", icon: <FileText size={20} />, label: "Files" },
+    { path: "/analytics", icon: <BarChart2 size={20} />, label: "Analytics" },
+    { path: "/users", icon: <Users size={20} />, label: "Users" },
+    { path: "/settings", icon: <Settings size={20} />, label: "Settings" },
   ];
 
   return (
-    <aside className="w-20 md:w-64 bg-white shadow-md">
-      <div className="h-full flex flex-col">
-        <nav className="mt-5 px-2 space-y-1">
-          {navItems.map((item) => (
-            <Link key={item.path} href={item.path}>
-              <a
-                className={cn(
-                  "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
-                  location === item.path
-                    ? "bg-primary-50 text-primary-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                )}
-              >
-                <item.icon className="mr-3 h-6 w-6" />
-                <span className="hidden md:inline-block">{item.name}</span>
-              </a>
-            </Link>
-          ))}
-        </nav>
+    <div className="w-64 bg-gray-900 text-white h-full flex flex-col">
+      <div className="p-5 border-b border-gray-800">
+        <h2 className="text-xl font-bold">OpenAI Assistant</h2>
+        <div className="text-sm mt-2 text-gray-400">
+          {user?.email}
+        </div>
       </div>
-    </aside>
+      <nav className="flex-1 overflow-y-auto">
+        <ul className="p-2">
+          {menuItems.map((item) => (
+            <li key={item.path} className="mb-1">
+              <Link href={item.path}>
+                <div
+                  className={`flex items-center p-3 rounded-md transition-colors cursor-pointer ${
+                    isActive(item.path)
+                      ? "bg-primary text-white"
+                      : "text-gray-300 hover:bg-gray-800"
+                  }`}
+                >
+                  <span className="mr-3">{item.icon}</span>
+                  <span>{item.label}</span>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="p-4 border-t border-gray-800">
+        <button
+          onClick={handleLogout}
+          className="flex items-center w-full p-3 text-gray-300 hover:bg-gray-800 rounded-md transition-colors"
+        >
+          <LogOut size={20} className="mr-3" />
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
   );
-}
+};
+
+export default Sidebar;
