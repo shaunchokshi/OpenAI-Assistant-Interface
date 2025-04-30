@@ -28,12 +28,20 @@ export default function ApiKeyManager() {
   const { toast } = useToast();
   const [apiKey, setApiKey] = useState("");
   const [isHidden, setIsHidden] = useState(true);
+  const [localHasApiKey, setLocalHasApiKey] = useState(false);
 
   // Query to get the user's configuration (includes hasApiKey)
   const { data: userConfig, isLoading: isConfigLoading } = useQuery<UserConfig>({
     queryKey: ["/api/user/config"],
     enabled: !!user,  // Only run if user is logged in
   });
+  
+  // Update local state when data changes
+  React.useEffect(() => {
+    if (userConfig) {
+      setLocalHasApiKey(userConfig.hasApiKey || false);
+    }
+  }, [userConfig]);
 
   // Mutation to update the user's API key
   const updateKeyMutation = useMutation({
@@ -42,6 +50,9 @@ export default function ApiKeyManager() {
       return await res.json();
     },
     onSuccess: () => {
+      // Update local state immediately
+      setLocalHasApiKey(true);
+      
       // Invalidate user config cache
       queryClient.invalidateQueries({ queryKey: ["/api/user/config"] });
       
@@ -91,7 +102,8 @@ export default function ApiKeyManager() {
     );
   }
 
-  const hasApiKey = userConfig?.hasApiKey;
+  // Use our local state that's updated immediately after save
+  const hasApiKey = localHasApiKey || userConfig?.hasApiKey;
 
   return (
     <div className="space-y-6">

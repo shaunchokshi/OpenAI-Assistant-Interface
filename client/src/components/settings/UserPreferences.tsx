@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/components/theme-provider";
 import { Switch } from "@/components/ui/switch";
 import {
   Card,
@@ -30,19 +31,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function UserPreferences() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   
   // These would eventually come from an API call to get user preferences
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(theme === "dark");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [selectedTheme, setSelectedTheme] = useState("system");
+  const [selectedTheme, setSelectedTheme] = useState<string>(theme);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Initialize the UI with the current theme state
+  useEffect(() => {
+    setDarkMode(theme === "dark");
+    setSelectedTheme(theme);
+  }, [theme]);
   
   // For demonstration purposes, simulate saving preferences
   const savePreferencesMutation = useMutation({
     mutationFn: async (preferences: any) => {
       // This would be an actual API call in the real implementation
       setIsLoading(true);
+      
+      // Apply the theme changes immediately on save
+      setTheme(preferences.theme as "light" | "dark" | "system");
       
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -69,12 +80,16 @@ export default function UserPreferences() {
 
   const handleThemeChange = (value: string) => {
     setSelectedTheme(value);
-    // In a real implementation, this would apply the theme to the application
+    // Apply theme immediately for better user experience
+    setTheme(value as "light" | "dark" | "system");
   };
 
   const handleToggleDarkMode = (checked: boolean) => {
     setDarkMode(checked);
-    // In a real implementation, this would toggle dark mode
+    // Update selected theme based on dark mode toggle and apply immediately
+    const newTheme = checked ? "dark" : "light";
+    setSelectedTheme(newTheme);
+    setTheme(newTheme);
   };
 
   const handleToggleNotifications = (checked: boolean) => {
