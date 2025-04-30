@@ -21,6 +21,8 @@ export interface IStorage {
   deleteUser(id: number): Promise<void>;
   updateUserOpenAIKey(userId: number, apiKeyHash: string): Promise<void>;
   updateDefaultAssistant(userId: number, assistantId: number | null): Promise<void>;
+  updateResetTimestamp(userId: number): Promise<void>;
+  clearResetTimestamp(userId: number): Promise<void>;
   
   // Assistant management
   createAssistant(assistant: InsertAssistant): Promise<Assistant>;
@@ -131,6 +133,26 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ 
         defaultAssistantId: assistantId,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+  
+  async updateResetTimestamp(userId: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        resetAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+  
+  async clearResetTimestamp(userId: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        resetAt: null,
         updatedAt: new Date()
       })
       .where(eq(users.id, userId));
