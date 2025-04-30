@@ -2,12 +2,12 @@ import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { db, pool } from "./db";
 import { 
-  users, assistants, threads, messages, files, oauthProfiles, userSessions,
+  users, assistants, threads, messages, files, oauthProfiles, userSessions, usageAnalytics,
   type User, type InsertUser, type Assistant, type InsertAssistant, 
   type UpdateAssistant, type Thread, type Message, type File,
-  type OAuthProfile, type UserSession
+  type OAuthProfile, type UserSession, type UsageAnalytic, type InsertUsageAnalytic
 } from "@shared/schema";
-import { eq, and, desc, sql, asc } from "drizzle-orm";
+import { eq, and, desc, sql, asc, lte, gte } from "drizzle-orm";
 import { createHash } from "crypto";
 
 const PostgresSessionStore = connectPg(session);
@@ -544,6 +544,186 @@ export class DatabaseStorage implements IStorage {
   
   async deleteFile(id: number): Promise<void> {
     await db.delete(files).where(eq(files.id, id));
+  }
+
+  // Usage Analytics methods
+  
+  async trackUsage(usageData: InsertUsageAnalytic): Promise<UsageAnalytic> {
+    const [record] = await db
+      .insert(usageAnalytics)
+      .values(usageData)
+      .returning();
+    return record;
+  }
+  
+  async getUserUsageAnalytics(userId: number, options?: {
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+    offset?: number;
+  }): Promise<UsageAnalytic[]> {
+    let query = db
+      .select()
+      .from(usageAnalytics)
+      .where(eq(usageAnalytics.userId, userId));
+    
+    if (options?.startDate) {
+      query = query.where(
+        gte(usageAnalytics.createdAt, options.startDate)
+      );
+    }
+    
+    if (options?.endDate) {
+      query = query.where(
+        lte(usageAnalytics.createdAt, options.endDate)
+      );
+    }
+    
+    query = query.orderBy(desc(usageAnalytics.createdAt));
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    if (options?.offset) {
+      query = query.offset(options.offset);
+    }
+    
+    return await query;
+  }
+  
+  async getUserUsageSummary(userId: number, options?: {
+    startDate?: Date;
+    endDate?: Date;
+    groupBy?: 'day' | 'week' | 'month';
+  }): Promise<{
+    totalRequests: number;
+    totalTokens: number;
+    totalCost: number;
+    periodSummaries: Array<{
+      period: string;
+      requests: number;
+      tokens: number;
+      cost: number;
+      models: Record<string, {
+        tokens: number;
+        cost: number;
+      }>;
+    }>;
+  }> {
+    // Build query conditions
+    let conditions = eq(usageAnalytics.userId, userId);
+    
+    if (options?.startDate) {
+      conditions = and(
+        conditions,
+        gte(usageAnalytics.createdAt, options.startDate)
+      );
+    }
+    
+    if (options?.endDate) {
+      conditions = and(
+        conditions,
+        lte(usageAnalytics.createdAt, options.endDate)
+      );
+    }
+    
+    // Get all analytics records for the time period
+    const records = await db
+      .select()
+      .from(usageAnalytics)
+      .where(conditions)
+      .orderBy(asc(usageAnalytics.createdAt));
+    
+    // Calculate totals
+    const totalRequests = records.length;
+    const totalTokens = records.reduce((sum, record) => sum + record.totalTokens, 0);
+    const totalCost = records.reduce((sum, record) => sum + record.estimatedCost, 0);
+    
+    // Group by period
+    const periodFormat = options?.groupBy || 'day';
+    const periodSummaries: Array<{
+      period: string;
+      requests: number;
+      tokens: number;
+      cost: number;
+      models: Record<string, {
+        tokens: number;
+        cost: number;
+      }>;
+    }> = [];
+    
+    // Group records by period
+    const groupedRecords: Record<string, UsageAnalytic[]> = {};
+    
+    for (const record of records) {
+      const date = new Date(record.createdAt);
+      let periodKey: string;
+      
+      if (periodFormat === 'day') {
+        periodKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      } else if (periodFormat === 'week') {
+        // Get the first day of the week (Sunday)
+        const day = date.getDay();
+        const diff = date.getDate() - day;
+        const firstDayOfWeek = new Date(date);
+        firstDayOfWeek.setDate(diff);
+        periodKey = firstDayOfWeek.toISOString().split('T')[0];
+      } else if (periodFormat === 'month') {
+        periodKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+      } else {
+        periodKey = date.toISOString().split('T')[0]; // Default to day
+      }
+      
+      if (!groupedRecords[periodKey]) {
+        groupedRecords[periodKey] = [];
+      }
+      
+      groupedRecords[periodKey].push(record);
+    }
+    
+    // Calculate summaries for each period
+    for (const [period, periodRecords] of Object.entries(groupedRecords)) {
+      const periodRequests = periodRecords.length;
+      const periodTokens = periodRecords.reduce((sum, record) => sum + record.totalTokens, 0);
+      const periodCost = periodRecords.reduce((sum, record) => sum + record.estimatedCost, 0);
+      
+      // Group by model
+      const models: Record<string, {
+        tokens: number;
+        cost: number;
+      }> = {};
+      
+      for (const record of periodRecords) {
+        if (!models[record.modelId]) {
+          models[record.modelId] = {
+            tokens: 0,
+            cost: 0
+          };
+        }
+        
+        models[record.modelId].tokens += record.totalTokens;
+        models[record.modelId].cost += record.estimatedCost;
+      }
+      
+      periodSummaries.push({
+        period,
+        requests: periodRequests,
+        tokens: periodTokens,
+        cost: periodCost,
+        models
+      });
+    }
+    
+    // Sort periods chronologically
+    periodSummaries.sort((a, b) => a.period.localeCompare(b.period));
+    
+    return {
+      totalRequests,
+      totalTokens,
+      totalCost,
+      periodSummaries
+    };
   }
 }
 
