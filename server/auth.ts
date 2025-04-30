@@ -26,10 +26,33 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  // Handle passwords created using bcrypt (which start with $2a$)
+  if (stored.startsWith('$2a$')) {
+    // We'll assume the stored hash is a complete bcrypt hash
+    // The structure is already in the format that bcrypt needs
+    try {
+      const bcrypt = require('bcrypt');
+      return await bcrypt.compare(supplied, stored);
+    } catch (err) {
+      console.error('Bcrypt compare error:', err);
+      return false;
+    }
+  }
+  
+  // Handle our native scrypt implementation
+  try {
+    const [hashed, salt] = stored.split(".");
+    if (!hashed || !salt) {
+      console.error('Invalid password format, missing hash or salt');
+      return false;
+    }
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (err) {
+    console.error('Password compare error:', err);
+    return false;
+  }
 }
 
 export function setupAuth(app: Express) {
