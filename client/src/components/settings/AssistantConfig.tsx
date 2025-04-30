@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,76 +16,66 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-
-interface AssistantConfigForm {
-  apiKey: string;
-  assistantId: string;
-  model: string;
-  temperature: number;
-  instructions: string;
-}
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiKeySchema } from "@/lib/validation";
+import { Loader2 } from "lucide-react";
+import { AssistantsList } from "./AssistantsList";
+import { CreateAssistantForm } from "./CreateAssistantForm";
 
 export default function AssistantConfig() {
   const { toast } = useToast();
-  const [temperature, setTemperature] = useState<number>(0.7);
+  const [activeTab, setActiveTab] = useState("api-key");
 
-  const { register, handleSubmit, setValue, reset } = useForm<AssistantConfigForm>({
+  // API Key Form
+  const apiKeyForm = useForm({
+    resolver: zodResolver(apiKeySchema),
     defaultValues: {
       apiKey: "",
-      assistantId: "",
-      model: "gpt-4o",
-      temperature: 0.7,
-      instructions: "",
     },
   });
 
-  useEffect(() => {
-    // Load saved settings from localStorage
-    const apiKey = localStorage.getItem("OPENAI_KEY") || "";
-    const assistantId = localStorage.getItem("ASSISTANT_ID") || "";
-    const model = localStorage.getItem("ASSISTANT_MODEL") || "gpt-4o";
-    const temp = parseFloat(localStorage.getItem("ASSISTANT_TEMPERATURE") || "0.7");
-    const instructions = localStorage.getItem("ASSISTANT_INSTRUCTIONS") || "";
-
-    reset({
-      apiKey,
-      assistantId,
-      model,
-      temperature: temp,
-      instructions,
-    });
-
-    setTemperature(temp);
-  }, [reset]);
-
-  const onSubmit = (data: AssistantConfigForm) => {
-    try {
-      // Save settings to localStorage
-      localStorage.setItem("OPENAI_KEY", data.apiKey);
-      localStorage.setItem("ASSISTANT_ID", data.assistantId);
-      localStorage.setItem("ASSISTANT_MODEL", data.model);
-      localStorage.setItem("ASSISTANT_TEMPERATURE", data.temperature.toString());
-      localStorage.setItem("ASSISTANT_INSTRUCTIONS", data.instructions);
-
+  // API Key Mutation
+  const saveApiKeyMutation = useMutation({
+    mutationFn: async (apiKey: string) => {
+      const res = await apiRequest("POST", "/api/settings/apikey", { apiKey });
+      return res.json();
+    },
+    onSuccess: () => {
       toast({
-        title: "Settings saved",
-        description: "Assistant configuration has been saved",
+        title: "API Key saved",
+        description: "Your OpenAI API key has been saved securely",
       });
-    } catch (error) {
-      console.error("Error saving settings:", error);
+      // Clear the form field for security
+      apiKeyForm.reset({ apiKey: "" });
+    },
+    onError: (error: Error) => {
       toast({
-        title: "Failed to save settings",
-        description: "An error occurred while saving settings",
+        title: "Failed to save API Key",
+        description: error.message || "An error occurred while saving your API key",
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  // Function to handle API key submission
+  const onApiKeySubmit = (data: { apiKey: string }) => {
+    saveApiKeyMutation.mutate(data.apiKey);
   };
 
-  const handleTemperatureChange = (value: number[]) => {
-    const newTemp = value[0];
-    setTemperature(newTemp);
-    setValue("temperature", newTemp);
-  };
+  // For checking if the user has set up an API key
+  const { isLoading: isCheckingApiKey, data: userConfig } = useQuery({
+    queryKey: ["/api/user/config"],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest("GET", "/api/user/config");
+        return await res.json();
+      } catch (error) {
+        // If the API fails, just return a default object
+        return { hasApiKey: false };
+      }
+    },
+  });
 
   return (
     <div>
@@ -96,97 +88,105 @@ export default function AssistantConfig() {
         </p>
       </div>
 
-      <Card className="mt-8 max-w-3xl">
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-              <div className="sm:col-span-6">
-                <Label htmlFor="apiKey">OpenAI API Key</Label>
-                <div className="mt-1">
-                  <Input
-                    id="apiKey"
-                    type="password"
-                    autoComplete="off"
-                    {...register("apiKey")}
-                  />
-                </div>
-              </div>
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="mt-8 max-w-4xl"
+      >
+        <TabsList className="grid grid-cols-3 mb-6">
+          <TabsTrigger value="api-key">API Key</TabsTrigger>
+          <TabsTrigger value="assistants">Your Assistants</TabsTrigger>
+          <TabsTrigger value="create-assistant">Create Assistant</TabsTrigger>
+        </TabsList>
 
-              <div className="sm:col-span-6">
-                <Label htmlFor="assistantId">Assistant ID</Label>
-                <div className="mt-1">
-                  <Input
-                    id="assistantId"
-                    placeholder="asst_abc123..."
-                    {...register("assistantId")}
-                  />
+        {/* API Key Tab */}
+        <TabsContent value="api-key">
+          <Card>
+            <CardContent className="pt-6">
+              {isCheckingApiKey ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              </div>
+              ) : (
+                <>
+                  {userConfig?.hasApiKey && (
+                    <div className="mb-6 p-4 bg-green-50 rounded-md border border-green-200">
+                      <p className="text-green-700">
+                        You currently have an API key set up. For security reasons, we don't display your existing key.
+                        Enter a new key below only if you want to change it.
+                      </p>
+                    </div>
+                  )}
+                  
+                  <form onSubmit={apiKeyForm.handleSubmit(onApiKeySubmit)} className="space-y-6">
+                    <div>
+                      <Label htmlFor="apiKey">OpenAI API Key</Label>
+                      <div className="mt-1">
+                        <Input
+                          id="apiKey"
+                          type="password"
+                          autoComplete="off"
+                          {...apiKeyForm.register("apiKey")}
+                        />
+                      </div>
+                      {apiKeyForm.formState.errors.apiKey && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {apiKeyForm.formState.errors.apiKey.message}
+                        </p>
+                      )}
+                      <p className="mt-2 text-sm text-gray-500">
+                        Your API key is stored securely and never shared. It's used to access the OpenAI API for your assistants.
+                      </p>
+                    </div>
 
-              <div className="sm:col-span-3">
-                <Label htmlFor="model">Model</Label>
-                <div className="mt-1">
-                  <Select
-                    defaultValue="gpt-4o"
-                    onValueChange={(value) => setValue("model", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                      <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                    <div className="pt-5">
+                      <div className="flex justify-end">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="mr-3" 
+                          onClick={() => apiKeyForm.reset()}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          disabled={saveApiKeyMutation.isPending}
+                        >
+                          {saveApiKeyMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            'Save API Key'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </form>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <div className="sm:col-span-3">
-                <Label htmlFor="temperature">Temperature: {temperature}</Label>
-                <div className="mt-3">
-                  <Slider
-                    value={[temperature]}
-                    min={0}
-                    max={1}
-                    step={0.1}
-                    onValueChange={handleTemperatureChange}
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 px-1 mt-1">
-                    <span>0</span>
-                    <span>0.5</span>
-                    <span>1</span>
-                  </div>
-                </div>
-              </div>
+        {/* Assistants Tab */}
+        <TabsContent value="assistants">
+          <AssistantsList onCreateNew={() => setActiveTab("create-assistant")} />
+        </TabsContent>
 
-              <div className="sm:col-span-6">
-                <Label htmlFor="instructions">Instructions</Label>
-                <div className="mt-1">
-                  <Textarea
-                    id="instructions"
-                    rows={3}
-                    placeholder="You are a helpful assistant..."
-                    {...register("instructions")}
-                  />
-                </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  Instructions that the assistant should follow when responding to users.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-5">
-              <div className="flex justify-end">
-                <Button type="button" variant="outline" className="mr-3" onClick={() => reset()}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save</Button>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        {/* Create Assistant Tab */}
+        <TabsContent value="create-assistant">
+          <CreateAssistantForm 
+            onSuccess={() => {
+              setActiveTab("assistants");
+              // Refresh the assistants list
+              queryClient.invalidateQueries({ queryKey: ["/api/assistants"] });
+            }} 
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
