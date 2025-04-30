@@ -1,302 +1,184 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation, Link, Route, Router, Switch } from "wouter";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Redirect } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Loader2, Github, Mail } from "lucide-react";
-import { RequestPasswordReset, ResetPassword } from "@/components/auth";
 
-// Login form schema
-const loginFormSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
+export default function AuthPage() {
+  const { user, loginMutation, registerMutation } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [activeTab, setActiveTab] = useState("login");
 
-// Registration form schema
-const registerFormSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-type LoginFormValues = z.infer<typeof loginFormSchema>;
-type RegisterFormValues = z.infer<typeof registerFormSchema>;
-
-function LoginForm() {
-  const { loginMutation } = useAuth();
-  const [, navigate] = useLocation();
-  
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginFormSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-  
-  function onSubmit(values: LoginFormValues) {
-    loginMutation.mutate(values);
+  // Redirect if already logged in
+  if (user) {
+    return <Redirect to="/" />;
   }
-  
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="you@example.com" 
-                  type="email" 
-                  {...field} 
-                  className="bg-[#dddddd] text-black"
-                  disabled={loginMutation.isPending}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Password</FormLabel>
-                <Link href="/auth/request-reset" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
-              <FormControl>
-                <Input 
-                  placeholder="••••••••" 
-                  type="password" 
-                  {...field} 
-                  className="bg-[#dddddd] text-black"
-                  disabled={loginMutation.isPending}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <Button 
-          type="submit" 
-          className="w-full" 
-          disabled={loginMutation.isPending}
-        >
-          {loginMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Logging in...
-            </>
-          ) : (
-            "Login"
-          )}
-        </Button>
-      </form>
-    </Form>
-  );
-}
 
-function RegisterForm() {
-  const { registerMutation } = useAuth();
-  
-  const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerFormSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-  
-  function onSubmit(values: RegisterFormValues) {
-    registerMutation.mutate(values);
-  }
-  
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="you@example.com" 
-                  type="email" 
-                  {...field}
-                  className="bg-[#dddddd] text-black"
-                  disabled={registerMutation.isPending}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="Create password" 
-                  type="password" 
-                  {...field}
-                  className="bg-[#dddddd] text-black"
-                  disabled={registerMutation.isPending}
-                />
-              </FormControl>
-              <FormMessage className="text-xs" />
-            </FormItem>
-          )}
-        />
-        
-        <Button 
-          type="submit" 
-          className="w-full" 
-          disabled={registerMutation.isPending}
-        >
-          {registerMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating account...
-            </>
-          ) : (
-            "Create Account"
-          )}
-        </Button>
-      </form>
-    </Form>
-  );
-}
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    loginMutation.mutate({ email, password });
+  };
 
-function SocialButtons() {
-  return (
-    <div className="flex flex-col space-y-2">
-      <Button variant="outline" className="w-full" asChild>
-        <a href="/auth/github">
-          <Github className="mr-2 h-4 w-4" />
-          Continue with GitHub
-        </a>
-      </Button>
-      <Button variant="outline" className="w-full" asChild>
-        <a href="/auth/google">
-          <Mail className="mr-2 h-4 w-4" />
-          Continue with Google
-        </a>
-      </Button>
-    </div>
-  );
-}
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+    registerMutation.mutate({ email, password });
+  };
 
-function MainAuthPage() {
   return (
     <div className="flex min-h-screen">
-      {/* Left side - Auth forms */}
-      <div className="flex items-center justify-center w-full lg:w-1/2 p-8">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>
-              Sign in to your account or create a new one to get started.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-              <TabsContent value="login">
-                <LoginForm />
-              </TabsContent>
-              <TabsContent value="register">
-                <RegisterForm />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-          <CardFooter className="flex flex-col">
-            <div className="relative my-3 w-full">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-            <SocialButtons />
-          </CardFooter>
-        </Card>
+      {/* Form section */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center p-8">
+        <div className="max-w-md mx-auto w-full">
+          <h1 className="text-3xl font-bold mb-8 text-center">
+            OpenAI Assistant
+          </h1>
+          
+          <Tabs defaultValue="login" onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium mb-1">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full p-2 border rounded bg-[#dddddd] text-black"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium mb-1">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full p-2 border rounded bg-[#dddddd] text-black"
+                  />
+                </div>
+                
+                <div className="text-right">
+                  <a href="/request-reset-password" className="text-sm text-primary hover:underline">
+                    Forgot password?
+                  </a>
+                </div>
+                
+                <button
+                  type="submit"
+                  className="w-full py-2 px-4 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? "Logging in..." : "Login"}
+                </button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="register">
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div>
+                  <label htmlFor="register-email" className="block text-sm font-medium mb-1">
+                    Email
+                  </label>
+                  <input
+                    id="register-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full p-2 border rounded bg-[#dddddd] text-black"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="register-password" className="block text-sm font-medium mb-1">
+                    Password
+                  </label>
+                  <input
+                    id="register-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full p-2 border rounded bg-[#dddddd] text-black"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="confirm-password" className="block text-sm font-medium mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="w-full p-2 border rounded bg-[#dddddd] text-black"
+                  />
+                </div>
+                
+                <button
+                  type="submit"
+                  className="w-full py-2 px-4 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+                  disabled={registerMutation.isPending}
+                >
+                  {registerMutation.isPending ? "Creating account..." : "Register"}
+                </button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
       
-      {/* Right side - Hero section */}
-      <div className="hidden lg:flex flex-col items-center justify-center w-1/2 p-12 bg-gradient-to-br from-primary to-primary-foreground">
-        <div className="max-w-md text-center text-white">
-          <h1 className="text-4xl font-bold mb-6">
-            AI Assistants Platform
-          </h1>
-          <p className="text-lg mb-6">
-            Create, manage, and interact with custom AI assistants powered by OpenAI.
-            Leverage your own API key for maximum flexibility and control.
+      {/* Hero section */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary/60 items-center justify-center p-12">
+        <div className="max-w-lg text-white">
+          <h2 className="text-4xl font-bold mb-6">
+            Interact with OpenAI Assistants
+          </h2>
+          <p className="text-xl mb-8">
+            Create, manage, and chat with your OpenAI assistants in one 
+            convenient place. Unlock the power of AI with a personalized experience.
           </p>
-          <ul className="text-left space-y-2 mb-8">
-            <li>✓ User-specific OpenAI API keys</li>
-            <li>✓ Create and customize AI assistants</li>
-            <li>✓ Manage conversation threads</li>
-            <li>✓ Share knowledge with file uploads</li>
-            <li>✓ Secure authentication</li>
+          <ul className="space-y-3">
+            <li className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              User-specific OpenAI API keys for privacy
+            </li>
+            <li className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Manage multiple assistants per user
+            </li>
+            <li className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Secure conversation storage and management
+            </li>
           </ul>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function AuthPage() {
-  const { user, isLoading } = useAuth();
-  const [, navigate] = useLocation();
-  
-  // Redirect to home if already logged in
-  useEffect(() => {
-    if (user && !isLoading) {
-      navigate("/");
-    }
-  }, [user, isLoading, navigate]);
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
-  return (
-    <Router base="/auth">
-      <Switch>
-        <Route path="/request-reset" component={RequestPasswordReset} />
-        <Route path="/reset-password" component={ResetPassword} />
-        <Route path="/" component={MainAuthPage} />
-      </Switch>
-    </Router>
   );
 }

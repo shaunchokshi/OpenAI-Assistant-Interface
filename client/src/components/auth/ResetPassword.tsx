@@ -1,172 +1,171 @@
-import React, { useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import { Redirect, useLocation } from "wouter";
 
-// Form validation schema
-const formSchema = z.object({
-  newPassword: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .max(100, "Password is too long"),
-  confirmPassword: z.string()
-    .min(8, "Password must be at least 8 characters"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-export function ResetPassword() {
+export default function ResetPassword() {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetComplete, setResetComplete] = useState(false);
   const { toast } = useToast();
-  const [location, setLocation] = useLocation();
-  
-  // Parse URL parameters
-  const params = new URLSearchParams(window.location.search);
-  const userId = params.get("userId");
-  const token = params.get("token");
-  
-  // Validate URL parameters
-  const isValidRequest = userId && token;
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-  
+  const [_, setLocation] = useLocation();
+
+  // Extract token and userId from URL query params
+  const searchParams = new URLSearchParams(window.location.search);
+  const token = searchParams.get("token");
+  const userId = searchParams.get("userId");
+
   const resetMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      const res = await apiRequest("POST", "/api/reset-password", {
-        userId: Number(userId),
+    mutationFn: async ({ 
+      password, 
+      userId, 
+      token 
+    }: { 
+      password: string; 
+      userId: string; 
+      token: string 
+    }) => {
+      const res = await apiRequest("POST", "/api/reset-password/reset", {
+        password,
+        userId: parseInt(userId, 10),
         token,
-        newPassword: values.newPassword,
       });
       return await res.json();
     },
     onSuccess: () => {
       toast({
         title: "Password reset successful",
-        description: "Your password has been updated. You can now log in with your new password.",
+        description: "Your password has been updated. Please log in with your new password.",
       });
-      form.reset();
-      // Redirect to login page after successful reset
-      setTimeout(() => setLocation("/auth"), 1500);
+      setResetComplete(true);
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        setLocation("/auth");
+      }, 2000);
     },
     onError: (error: Error) => {
       toast({
-        title: "Reset failed",
-        description: error.message || "Invalid or expired reset link. Please try again.",
+        title: "Password reset failed",
+        description: error.message || "Invalid or expired reset token. Please try again.",
         variant: "destructive",
       });
     },
   });
-  
-  // Show error if URL parameters are invalid
-  useEffect(() => {
-    if (!isValidRequest) {
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
       toast({
-        title: "Invalid reset link",
-        description: "The password reset link is invalid or has expired. Please request a new one.",
+        title: "Passwords don't match",
+        description: "Please make sure both passwords match.",
         variant: "destructive",
       });
+      return;
     }
-  }, [isValidRequest, toast]);
-  
-  function onSubmit(values: FormValues) {
-    if (!isValidRequest) return;
-    resetMutation.mutate(values);
+    
+    if (password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!token || !userId) {
+      toast({
+        title: "Invalid reset link",
+        description: "The password reset link is invalid or has expired.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    resetMutation.mutate({ password, userId, token });
+  };
+
+  // Redirect to login if reset is already complete
+  if (resetComplete) {
+    return <Redirect to="/auth" />;
   }
-  
-  if (!isValidRequest) {
+
+  // Validate token and userId are present
+  if (!token || !userId) {
     return (
-      <div className="space-y-4 max-w-md mx-auto text-center">
-        <h1 className="text-2xl font-bold">Invalid Reset Link</h1>
-        <p className="text-muted-foreground">
-          The password reset link is invalid or has expired.
+      <div className="max-w-md mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Invalid Reset Link</h1>
+        <p className="mb-4">
+          The password reset link is invalid or has expired. Please request a new password reset link.
         </p>
-        <Button asChild className="mt-4">
-          <Link href="/auth/request-reset">Request New Reset Link</Link>
-        </Button>
+        <a 
+          href="/request-reset-password" 
+          className="text-primary hover:underline"
+        >
+          Request new reset link
+        </a>
       </div>
     );
   }
-  
+
   return (
-    <div className="space-y-4 max-w-md mx-auto">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Reset Your Password</h1>
-        <p className="text-muted-foreground mt-2">
-          Enter your new password below.
-        </p>
-      </div>
+    <div className="max-w-md mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Reset Your Password</h1>
+      <p className="mb-4">
+        Please enter your new password below.
+      </p>
       
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="newPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>New Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Enter new password" 
-                    type="password" 
-                    {...field} 
-                    disabled={resetMutation.isPending}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="new-password" className="block text-sm font-medium mb-1">
+            New Password
+          </label>
+          <input
+            id="new-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full p-2 border rounded bg-[#dddddd] text-black"
+            placeholder="Minimum 8 characters"
+            minLength={8}
           />
-          
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Confirm new password" 
-                    type="password" 
-                    {...field} 
-                    disabled={resetMutation.isPending}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+        </div>
+        
+        <div>
+          <label htmlFor="confirm-new-password" className="block text-sm font-medium mb-1">
+            Confirm New Password
+          </label>
+          <input
+            id="confirm-new-password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className="w-full p-2 border rounded bg-[#dddddd] text-black"
+            placeholder="Confirm your password"
+            minLength={8}
           />
-          
-          <Button 
-            type="submit" 
-            className="w-full" 
+        </div>
+        
+        <div className="flex flex-col gap-2">
+          <button
+            type="submit"
+            className="w-full py-2 px-4 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
             disabled={resetMutation.isPending}
           >
-            {resetMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Resetting...
-              </>
-            ) : (
-              "Reset Password"
-            )}
-          </Button>
-        </form>
-      </Form>
+            {resetMutation.isPending ? "Resetting..." : "Reset Password"}
+          </button>
+          
+          <a 
+            href="/auth" 
+            className="text-center text-sm text-primary hover:underline"
+          >
+            Back to login
+          </a>
+        </div>
+      </form>
     </div>
   );
 }
