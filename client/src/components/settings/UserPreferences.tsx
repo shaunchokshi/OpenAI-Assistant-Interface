@@ -33,22 +33,27 @@ export default function UserPreferences() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   
-  // Get current theme preferences from the theme provider
+  // Get current theme preferences directly from the theme provider
+  // Using useState to track UI state, but actual theme is managed by ThemeProvider
   const [darkMode, setDarkMode] = useState(
     theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
   );
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [selectedTheme, setSelectedTheme] = useState<string>(theme);
+  const [selectedTheme, setSelectedTheme] = useState<"light" | "dark" | "system">(
+    theme as "light" | "dark" | "system"
+  );
   const [isLoading, setIsLoading] = useState(false);
   
   // Initialize the UI with the current theme state and keep it in sync
   useEffect(() => {
+    console.log("Theme from provider:", theme); // Debug output
+    
     const isDark = theme === "dark" || 
       (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     
     setDarkMode(isDark);
-    setSelectedTheme(theme);
+    setSelectedTheme(theme as "light" | "dark" | "system");
     
     // Add a media query listener for system theme changes
     if (theme === "system") {
