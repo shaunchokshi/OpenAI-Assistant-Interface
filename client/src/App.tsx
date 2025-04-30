@@ -9,6 +9,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 // Pages
 import HomePage from "./pages/home-page";
 import AuthPage from "./pages/auth-page";
+import SettingsPage from "./pages/settings-page";
 import NotFound from "./pages/not-found";
 
 // Auth Components
@@ -19,6 +20,7 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route path="/auth">
         <AuthPage />
       </Route>

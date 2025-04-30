@@ -2,6 +2,7 @@ import React from "react";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import SessionsManager from "@/components/settings/SessionsManager";
+import ProfileInfo from "@/components/settings/ProfileInfo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -32,7 +33,7 @@ export default function SettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">Account settings coming soon</p>
+                    <ProfileInfo />
                   </CardContent>
                 </Card>
               </TabsContent>
