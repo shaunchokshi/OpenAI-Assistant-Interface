@@ -119,7 +119,7 @@ export default function FileManager() {
     isLoading,
     isError,
     error,
-  } = useQuery<FileObject[]>({
+  } = useQuery<FileObject[], Error>({
     queryKey: ["/api/files"],
     enabled: !!user, // Only fetch if user is logged in
   });
@@ -324,10 +324,10 @@ export default function FileManager() {
             <FileUploader 
               onUploadStart={() => setIsUploading(true)}
               onUploadComplete={handleFileUploaded}
-              onUploadError={(error) => {
+              onUploadError={(errorMsg: string) => {
                 toast({
                   title: "Upload failed",
-                  description: error,
+                  description: errorMsg,
                   variant: "destructive",
                 });
                 setIsUploading(false);
