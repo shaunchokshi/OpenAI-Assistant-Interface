@@ -125,6 +125,19 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async createUserWithOAuth(email: string, name?: string, picture?: string): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        email,
+        name,
+        picture,
+        // No password for OAuth users
+      })
+      .returning();
+    return user;
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users);
   }
@@ -181,6 +194,148 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(users.id, userId));
+  }
+  
+  // OAuth management methods
+  
+  async findOrCreateOAuthProfile(
+    provider: string,
+    providerUserId: string,
+    userId: number,
+    accessToken?: string,
+    refreshToken?: string
+  ): Promise<OAuthProfile> {
+    // Check if profile already exists
+    const [existingProfile] = await db
+      .select()
+      .from(oauthProfiles)
+      .where(
+        and(
+          eq(oauthProfiles.provider, provider),
+          eq(oauthProfiles.providerUserId, providerUserId)
+        )
+      );
+    
+    if (existingProfile) {
+      // Update tokens if provided
+      if (accessToken || refreshToken) {
+        const updateData: any = {};
+        if (accessToken) updateData.accessToken = accessToken;
+        if (refreshToken) updateData.refreshToken = refreshToken;
+        
+        const [updated] = await db
+          .update(oauthProfiles)
+          .set(updateData)
+          .where(eq(oauthProfiles.id, existingProfile.id))
+          .returning();
+        
+        return updated;
+      }
+      
+      return existingProfile;
+    }
+    
+    // Create new profile
+    const [profile] = await db
+      .insert(oauthProfiles)
+      .values({
+        provider,
+        providerUserId,
+        userId,
+        accessToken,
+        refreshToken
+      })
+      .returning();
+    
+    return profile;
+  }
+  
+  async getOAuthProfileByProviderAndId(provider: string, providerUserId: string): Promise<OAuthProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(oauthProfiles)
+      .where(
+        and(
+          eq(oauthProfiles.provider, provider),
+          eq(oauthProfiles.providerUserId, providerUserId)
+        )
+      );
+    
+    return profile;
+  }
+  
+  async getOAuthProfilesForUser(userId: number): Promise<OAuthProfile[]> {
+    return await db
+      .select()
+      .from(oauthProfiles)
+      .where(eq(oauthProfiles.userId, userId));
+  }
+  
+  // Session management methods
+  
+  async createUserSession(
+    userId: number,
+    sessionId: string,
+    userAgent?: string,
+    ipAddress?: string
+  ): Promise<UserSession> {
+    const [session] = await db
+      .insert(userSessions)
+      .values({
+        userId,
+        sessionId,
+        userAgent,
+        ipAddress
+      })
+      .returning();
+    
+    return session;
+  }
+  
+  async getUserSessions(userId: number): Promise<UserSession[]> {
+    return await db
+      .select()
+      .from(userSessions)
+      .where(
+        and(
+          eq(userSessions.userId, userId),
+          eq(userSessions.isActive, true)
+        )
+      )
+      .orderBy(desc(userSessions.lastActive));
+  }
+  
+  async terminateUserSession(id: number): Promise<void> {
+    await db
+      .update(userSessions)
+      .set({ isActive: false })
+      .where(eq(userSessions.id, id));
+  }
+  
+  async terminateAllUserSessions(userId: number, exceptSessionId?: string): Promise<void> {
+    let conditions = and(
+      eq(userSessions.userId, userId),
+      eq(userSessions.isActive, true)
+    );
+    
+    if (exceptSessionId) {
+      conditions = and(
+        conditions,
+        sql`${userSessions.sessionId} != ${exceptSessionId}`
+      );
+    }
+    
+    await db
+      .update(userSessions)
+      .set({ isActive: false })
+      .where(conditions);
+  }
+  
+  async updateUserSessionActivity(sessionId: string): Promise<void> {
+    await db
+      .update(userSessions)
+      .set({ lastActive: new Date() })
+      .where(eq(userSessions.sessionId, sessionId));
   }
   
   // Assistant management methods

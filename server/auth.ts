@@ -59,7 +59,7 @@ export function setupAuth(app: Express) {
       async (email, password, done) => {
         try {
           const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
+          if (!user || !user.password || !(await comparePasswords(password, user.password))) {
             return done(null, false);
           } else {
             return done(null, user);
@@ -87,16 +87,52 @@ export function setupAuth(app: Express) {
               return done(new Error("No email found in GitHub profile"), false);
             }
 
-            let user = await storage.getUserByEmail(email);
-            if (!user) {
-              // Create a new user with a random password
-              const randomPassword = randomBytes(16).toString("hex");
-              user = await storage.createUser({
-                email,
-                password: await hashPassword(randomPassword),
-              });
+            // Check if we have an OAuth profile already
+            const existingProfile = await storage.getOAuthProfileByProviderAndId(
+              "github", 
+              profile.id.toString()
+            );
+            
+            if (existingProfile) {
+              // User exists, get the user and update tokens
+              const user = await storage.getUser(existingProfile.userId);
+              if (!user) {
+                return done(new Error("User not found for existing OAuth profile"), false);
+              }
+              
+              // Update tokens if needed
+              await storage.findOrCreateOAuthProfile(
+                "github",
+                profile.id.toString(),
+                user.id,
+                accessToken,
+                refreshToken
+              );
+              
+              return done(null, user);
             }
-
+            
+            // Check if a user with this email already exists
+            let user = await storage.getUserByEmail(email);
+            
+            if (!user) {
+              // Create new user
+              user = await storage.createUserWithOAuth(
+                email, 
+                profile.displayName || profile.username,
+                profile.photos?.[0]?.value
+              );
+            }
+            
+            // Create OAuth profile
+            await storage.findOrCreateOAuthProfile(
+              "github",
+              profile.id.toString(),
+              user.id,
+              accessToken,
+              refreshToken
+            );
+            
             return done(null, user);
           } catch (err) {
             return done(err);
@@ -123,16 +159,52 @@ export function setupAuth(app: Express) {
               return done(new Error("No email found in Google profile"), false);
             }
 
-            let user = await storage.getUserByEmail(email);
-            if (!user) {
-              // Create a new user with a random password
-              const randomPassword = randomBytes(16).toString("hex");
-              user = await storage.createUser({
-                email,
-                password: await hashPassword(randomPassword),
-              });
+            // Check if we have an OAuth profile already
+            const existingProfile = await storage.getOAuthProfileByProviderAndId(
+              "google", 
+              profile.id
+            );
+            
+            if (existingProfile) {
+              // User exists, get the user and update tokens
+              const user = await storage.getUser(existingProfile.userId);
+              if (!user) {
+                return done(new Error("User not found for existing OAuth profile"), false);
+              }
+              
+              // Update tokens if needed
+              await storage.findOrCreateOAuthProfile(
+                "google",
+                profile.id,
+                user.id,
+                accessToken,
+                refreshToken
+              );
+              
+              return done(null, user);
             }
-
+            
+            // Check if a user with this email already exists
+            let user = await storage.getUserByEmail(email);
+            
+            if (!user) {
+              // Create new user with profile data
+              user = await storage.createUserWithOAuth(
+                email, 
+                profile.displayName,
+                profile.photos?.[0]?.value
+              );
+            }
+            
+            // Create OAuth profile
+            await storage.findOrCreateOAuthProfile(
+              "google",
+              profile.id,
+              user.id,
+              accessToken,
+              refreshToken
+            );
+            
             return done(null, user);
           } catch (err) {
             return done(err);
@@ -165,6 +237,11 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email already in use" });
       }
 
+      // Check if password is provided
+      if (!userData.password) {
+        return res.status(400).json({ message: "Password is required" });
+      }
+
       // Hash the password before storing
       const hashedPassword = await hashPassword(userData.password);
       
@@ -183,15 +260,115 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json({ id: req.user?.id, email: req.user?.email });
+  app.post("/api/login", passport.authenticate("local"), async (req, res) => {
+    try {
+      if (req.user && req.sessionID) {
+        // Track the user session
+        await storage.createUserSession(
+          req.user.id,
+          req.sessionID,
+          req.headers['user-agent'],
+          req.ip
+        );
+      }
+      
+      res.status(200).json({ id: req.user?.id, email: req.user?.email });
+    } catch (error) {
+      console.error("Error tracking login session:", error);
+      // Still return success even if session tracking failed
+      res.status(200).json({ id: req.user?.id, email: req.user?.email });
+    }
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
-      res.sendStatus(200);
-    });
+  app.post("/api/logout", async (req, res, next) => {
+    try {
+      if (req.user && req.sessionID) {
+        // Find the session ID by session ID
+        const userId = req.user.id;
+        
+        // Get all sessions for the user
+        const sessions = await storage.getUserSessions(userId);
+        const currentSession = sessions.find(session => session.sessionId === req.sessionID);
+        
+        // Terminate the current session if found
+        if (currentSession) {
+          await storage.terminateUserSession(currentSession.id);
+        }
+      }
+
+      req.logout((err) => {
+        if (err) return next(err);
+        res.sendStatus(200);
+      });
+    } catch (error) {
+      console.error("Error ending session:", error);
+      req.logout((err) => {
+        if (err) return next(err);
+        res.sendStatus(200);
+      });
+    }
+  });
+  
+  // User sessions API
+  app.get("/api/user/sessions", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const sessions = await storage.getUserSessions(userId);
+      
+      // Don't send sensitive data back to client
+      const sanitizedSessions = sessions.map(session => ({
+        id: session.id,
+        userAgent: session.userAgent,
+        ipAddress: session.ipAddress,
+        lastActive: session.lastActive,
+        createdAt: session.createdAt,
+        isCurrent: session.sessionId === req.sessionID
+      }));
+      
+      res.json(sanitizedSessions);
+    } catch (error) {
+      console.error("Error fetching user sessions:", error);
+      res.status(500).json({ message: "Failed to fetch user sessions" });
+    }
+  });
+  
+  app.delete("/api/user/sessions/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.id, 10);
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      await storage.terminateUserSession(sessionId);
+      res.status(200).json({ message: "Session terminated successfully" });
+    } catch (error) {
+      console.error("Error terminating session:", error);
+      res.status(500).json({ message: "Failed to terminate session" });
+    }
+  });
+  
+  app.delete("/api/user/sessions", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Keep the current session active, terminate all others
+      await storage.terminateAllUserSessions(userId, req.sessionID);
+      
+      res.status(200).json({ message: "All other sessions terminated successfully" });
+    } catch (error) {
+      console.error("Error terminating sessions:", error);
+      res.status(500).json({ message: "Failed to terminate sessions" });
+    }
   });
 
   app.get("/api/user", (req, res) => {
@@ -204,14 +381,46 @@ export function setupAuth(app: Express) {
   app.get(
     "/auth/github/callback",
     passport.authenticate("github", { failureRedirect: "/auth" }),
-    (req, res) => res.redirect("/")
+    async (req, res) => {
+      try {
+        // Track the user session on successful login
+        if (req.user && req.sessionID) {
+          await storage.createUserSession(
+            req.user.id,
+            req.sessionID,
+            req.headers['user-agent'],
+            req.ip
+          );
+        }
+      } catch (error) {
+        console.error("Error tracking GitHub login session:", error);
+      }
+      
+      res.redirect("/");
+    }
   );
 
   app.get("/auth/google", passport.authenticate("google"));
   app.get(
     "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/auth" }),
-    (req, res) => res.redirect("/")
+    async (req, res) => {
+      try {
+        // Track the user session on successful login
+        if (req.user && req.sessionID) {
+          await storage.createUserSession(
+            req.user.id,
+            req.sessionID,
+            req.headers['user-agent'],
+            req.ip
+          );
+        }
+      } catch (error) {
+        console.error("Error tracking Google login session:", error);
+      }
+      
+      res.redirect("/");
+    }
   );
 
   // Create a token for password reset requests
