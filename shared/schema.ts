@@ -5,7 +5,9 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"), // Can be null for social login users
+  name: varchar("name", { length: 255 }),
+  picture: varchar("picture", { length: 1024 }),
   openaiKeyHash: varchar("openai_key_hash", { length: 255 }),
   defaultAssistantId: integer("default_assistant_id"),
   resetAt: timestamp("reset_at"),
@@ -80,6 +82,17 @@ export const sessions = pgTable("session", {
   expire: timestamp("expire", { precision: 6 }).notNull(),
 });
 
+export const userSessions = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sessionId: varchar("session_id", { length: 255 }).notNull().references(() => sessions.sid, { onDelete: "cascade" }),
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  lastActive: timestamp("last_active").defaultNow(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schemas for inserts and validation
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -130,3 +143,4 @@ export type Message = typeof messages.$inferSelect;
 export type File = typeof files.$inferSelect;
 export type OAuthProfile = typeof oauthProfiles.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type UserSession = typeof userSessions.$inferSelect;

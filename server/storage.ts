@@ -2,9 +2,10 @@ import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { db, pool } from "./db";
 import { 
-  users, assistants, threads, messages, files,
+  users, assistants, threads, messages, files, oauthProfiles, userSessions,
   type User, type InsertUser, type Assistant, type InsertAssistant, 
-  type UpdateAssistant, type Thread, type Message, type File 
+  type UpdateAssistant, type Thread, type Message, type File,
+  type OAuthProfile, type UserSession
 } from "@shared/schema";
 import { eq, and, desc, sql, asc } from "drizzle-orm";
 import { createHash } from "crypto";
@@ -16,6 +17,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  createUserWithOAuth(email: string, name?: string, picture?: string): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUserPassword(id: number, newPassword: string): Promise<void>;
   deleteUser(id: number): Promise<void>;
@@ -23,6 +25,29 @@ export interface IStorage {
   updateDefaultAssistant(userId: number, assistantId: number | null): Promise<void>;
   updateResetTimestamp(userId: number): Promise<void>;
   clearResetTimestamp(userId: number): Promise<void>;
+  
+  // OAuth management
+  findOrCreateOAuthProfile(
+    provider: string,
+    providerUserId: string,
+    userId: number,
+    accessToken?: string,
+    refreshToken?: string
+  ): Promise<OAuthProfile>;
+  getOAuthProfileByProviderAndId(provider: string, providerUserId: string): Promise<OAuthProfile | undefined>;
+  getOAuthProfilesForUser(userId: number): Promise<OAuthProfile[]>;
+  
+  // Session management
+  createUserSession(
+    userId: number,
+    sessionId: string,
+    userAgent?: string,
+    ipAddress?: string
+  ): Promise<UserSession>;
+  getUserSessions(userId: number): Promise<UserSession[]>;
+  terminateUserSession(id: number): Promise<void>;
+  terminateAllUserSessions(userId: number, exceptSessionId?: string): Promise<void>;
+  updateUserSessionActivity(sessionId: string): Promise<void>;
   
   // Assistant management
   createAssistant(assistant: InsertAssistant): Promise<Assistant>;
