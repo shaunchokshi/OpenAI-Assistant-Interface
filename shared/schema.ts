@@ -92,8 +92,14 @@ export const loginUserSchema = z.object({
   password: z.string(),
 });
 
-export const resetPasswordSchema = z.object({
+export const requestPasswordResetSchema = z.object({
   email: z.string().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  userId: z.number().int().positive("Invalid user ID"),
+  token: z.string().min(1, "Reset token is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters")
 });
 
 export const assistantSchema = createInsertSchema(assistants, {
@@ -115,6 +121,7 @@ export type LoginUser = z.infer<typeof loginUserSchema>;
 export type InsertAssistant = z.infer<typeof assistantSchema>;
 export type UpdateAssistant = z.infer<typeof updateAssistantSchema>;
 export type ApiKeyUpdate = z.infer<typeof apiKeySchema>;
+export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Assistant = typeof assistants.$inferSelect;
