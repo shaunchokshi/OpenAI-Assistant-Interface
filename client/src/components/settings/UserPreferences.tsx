@@ -73,6 +73,7 @@ export default function UserPreferences() {
       // Update UI state with preferences from server
       if (data.theme) {
         setSelectedTheme(data.theme as "light" | "dark" | "system");
+        setTheme(data.theme); // Update the actual theme in the provider
         setDarkMode(data.theme === "dark" || (data.theme === "system" && 
           window.matchMedia("(prefers-color-scheme: dark)").matches));
       }
@@ -87,17 +88,36 @@ export default function UserPreferences() {
       }
       
       // Update custom colors
-      const hasCustomColors = !!(data.accentColor || data.backgroundColor || data.foregroundColor);
+      const hasCustomColors = data.customColors === true && 
+        !!(data.accentColor || data.backgroundColor || data.foregroundColor);
+      
       setCustomColorsEnabled(hasCustomColors);
       
       if (hasCustomColors) {
+        // Update local state for the form
         setCustomColors({
           background: data.backgroundColor || "",
           foreground: data.foregroundColor || "",
-          primary: "",
+          primary: data.primaryColor || "",
           accent: data.accentColor || "",
-          card: ""
+          card: data.cardColor || ""
         });
+        
+        // Apply to the provider so it takes effect immediately
+        setProviderCustomColors({
+          backgroundColor: data.backgroundColor,
+          foregroundColor: data.foregroundColor,
+          accentColor: data.accentColor
+        });
+        
+        console.log("Applied custom colors from DB:", {
+          backgroundColor: data.backgroundColor,
+          foregroundColor: data.foregroundColor,
+          accentColor: data.accentColor
+        });
+      } else {
+        // Clear provider custom colors when not enabled
+        setProviderCustomColors({});
       }
       
       return data;
@@ -223,7 +243,8 @@ export default function UserPreferences() {
     const preferencesData: Record<string, any> = {
       theme: selectedTheme,
       notificationsEnabled,
-      soundEnabled
+      soundEnabled,
+      customColors: customColorsEnabled
     };
     
     // Add custom colors if enabled
@@ -231,7 +252,24 @@ export default function UserPreferences() {
       preferencesData.backgroundColor = customColors.background;
       preferencesData.foregroundColor = customColors.foreground;
       preferencesData.accentColor = customColors.accent;
+      // Also store current values for other fields in case they're used later
+      if (customColors.primary) preferencesData.primaryColor = customColors.primary;
+      if (customColors.card) preferencesData.cardColor = customColors.card;
+    } else {
+      // If custom colors aren't enabled, ensure we clear any existing values
+      preferencesData.backgroundColor = null;
+      preferencesData.foregroundColor = null;
+      preferencesData.accentColor = null;
+      preferencesData.primaryColor = null;
+      preferencesData.cardColor = null;
     }
+    
+    // Apply changes immediately via theme provider
+    setProviderCustomColors(customColorsEnabled ? {
+      backgroundColor: customColors.background, 
+      foregroundColor: customColors.foreground,
+      accentColor: customColors.accent
+    } : {});
     
     savePreferencesMutation.mutate(preferencesData);
   };

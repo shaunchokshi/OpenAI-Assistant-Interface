@@ -79,6 +79,58 @@ export function ThemeProvider({
     retry: false
   });
 
+  // Helper function to convert hex to hsl if needed
+  const hexToHsl = (hex: string): string => {
+    // If already in hsl format, return as is
+    if (hex.startsWith('hsl')) return hex;
+    
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Convert hex to rgb
+    let r = 0, g = 0, b = 0;
+    if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+    } else if (hex.length === 6) {
+      r = parseInt(hex.substring(0, 2), 16);
+      g = parseInt(hex.substring(2, 4), 16);
+      b = parseInt(hex.substring(4, 6), 16);
+    } else {
+      // If invalid hex, return black
+      return '0 0% 0%';
+    }
+    
+    // Convert rgb to hsl
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      
+      h /= 6;
+    }
+    
+    h = Math.round(h * 360);
+    s = Math.round(s * 100);
+    l = Math.round(l * 100);
+    
+    return `${h} ${s}% ${l}%`;
+  };
+
   // Apply theme classes and custom CSS properties
   useEffect(() => {
     const root = window.document.documentElement;
@@ -97,29 +149,89 @@ export function ThemeProvider({
       root.classList.add(theme);
     }
     
-    // Apply custom CSS variables for colors if they exist
+    // Apply direct CSS style overrides using hex values
     if (customColors.backgroundColor) {
-      root.style.setProperty('--background', customColors.backgroundColor);
+      root.style.setProperty('--background-color', customColors.backgroundColor);
+      // For background we'll use the actual color directly to override Tailwind
+      document.body.style.backgroundColor = customColors.backgroundColor;
+    } else {
+      root.style.removeProperty('--background-color');
+      document.body.style.removeProperty('background-color');
     }
     
     if (customColors.foregroundColor) {
-      root.style.setProperty('--foreground', customColors.foregroundColor);
+      root.style.setProperty('--foreground-color', customColors.foregroundColor);
+      // For text color we'll use the actual color directly to override Tailwind
+      document.body.style.color = customColors.foregroundColor;
+    } else {
+      root.style.removeProperty('--foreground-color');
+      document.body.style.removeProperty('color');
     }
     
     if (customColors.accentColor) {
-      root.style.setProperty('--primary', customColors.accentColor);
-      // Also set it as accent
-      root.style.setProperty('--accent', customColors.accentColor);
+      root.style.setProperty('--accent-color', customColors.accentColor);
+      
+      // Update primary button colors
+      const buttons = document.querySelectorAll('.bg-primary');
+      buttons.forEach(button => {
+        (button as HTMLElement).style.backgroundColor = customColors.accentColor;
+      });
+      
+      // Update selected items, borders, etc.
+      const primaryElems = document.querySelectorAll('.text-primary, .border-primary, .hover\\:text-primary');
+      primaryElems.forEach(elem => {
+        if (elem.classList.contains('text-primary')) {
+          (elem as HTMLElement).style.color = customColors.accentColor;
+        }
+        if (elem.classList.contains('border-primary')) {
+          (elem as HTMLElement).style.borderColor = customColors.accentColor;
+        }
+      });
+    } else {
+      root.style.removeProperty('--accent-color');
+      
+      // Reset elements
+      const buttons = document.querySelectorAll('.bg-primary');
+      buttons.forEach(button => {
+        (button as HTMLElement).style.removeProperty('background-color');
+      });
+      
+      const primaryElems = document.querySelectorAll('.text-primary, .border-primary, .hover\\:text-primary');
+      primaryElems.forEach(elem => {
+        if (elem.classList.contains('text-primary')) {
+          (elem as HTMLElement).style.removeProperty('color');
+        }
+        if (elem.classList.contains('border-primary')) {
+          (elem as HTMLElement).style.removeProperty('border-color');
+        }
+      });
     }
     
     // Clean up function to remove custom properties when component unmounts
     return () => {
-      if (customColors.backgroundColor) root.style.removeProperty('--background');
-      if (customColors.foregroundColor) root.style.removeProperty('--foreground');
-      if (customColors.accentColor) {
-        root.style.removeProperty('--primary');
-        root.style.removeProperty('--accent');
-      }
+      // Reset all properties
+      const properties = ['--background-color', '--foreground-color', '--accent-color'];
+      properties.forEach(prop => root.style.removeProperty(prop));
+      
+      // Reset direct style overrides
+      document.body.style.removeProperty('background-color');
+      document.body.style.removeProperty('color');
+      
+      // Reset elements
+      const buttons = document.querySelectorAll('.bg-primary');
+      buttons.forEach(button => {
+        (button as HTMLElement).style.removeProperty('background-color');
+      });
+      
+      const primaryElems = document.querySelectorAll('.text-primary, .border-primary, .hover\\:text-primary');
+      primaryElems.forEach(elem => {
+        if (elem.classList.contains('text-primary')) {
+          (elem as HTMLElement).style.removeProperty('color');
+        }
+        if (elem.classList.contains('border-primary')) {
+          (elem as HTMLElement).style.removeProperty('border-color');
+        }
+      });
     };
   }, [theme, customColors]);
 
