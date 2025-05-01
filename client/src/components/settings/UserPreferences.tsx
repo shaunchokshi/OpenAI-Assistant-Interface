@@ -268,8 +268,19 @@ export default function UserPreferences() {
     setProviderCustomColors(customColorsEnabled ? {
       backgroundColor: customColors.background, 
       foregroundColor: customColors.foreground,
-      accentColor: customColors.accent
+      accentColor: customColors.accent,
+      primaryColor: customColors.primary,
+      cardColor: customColors.card
     } : {});
+    
+    // Log what we're saving to help with debugging
+    console.log("Saving custom colors:", {
+      background: customColors.background,
+      foreground: customColors.foreground,
+      accent: customColors.accent,
+      primary: customColors.primary,
+      card: customColors.card
+    });
     
     savePreferencesMutation.mutate(preferencesData);
   };

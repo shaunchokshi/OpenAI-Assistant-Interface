@@ -160,23 +160,30 @@ export function ThemeProvider({
     if (customColors.backgroundColor) {
       console.log("Applying background color:", customColors.backgroundColor);
       
-      // Set CSS variable for Tailwind
+      // Set CSS variables for Tailwind
       root.style.setProperty('--background', customColors.backgroundColor);
+      
+      // These are the variables that Tailwind actually uses
+      const hslValue = hexToHsl(customColors.backgroundColor);
+      root.style.setProperty('--background', hslValue);
       
       // Apply directly to elements
       document.body.style.backgroundColor = customColors.backgroundColor;
       
       // Override Tailwind classes by selecting all elements with bg-background
-      document.querySelectorAll('.bg-background').forEach(elem => {
+      document.querySelectorAll('.bg-background, body, [data-theme]').forEach(elem => {
         const backgroundColor = customColors.backgroundColor || '';
         (elem as HTMLElement).style.backgroundColor = backgroundColor;
       });
     } else {
+      // Remove CSS variables
       root.style.removeProperty('--background');
+      
+      // Reset direct style overrides
       document.body.style.removeProperty('background-color');
       
       // Reset element styles
-      document.querySelectorAll('.bg-background').forEach(elem => {
+      document.querySelectorAll('.bg-background, body, [data-theme]').forEach(elem => {
         (elem as HTMLElement).style.removeProperty('background-color');
       });
     }
@@ -184,21 +191,24 @@ export function ThemeProvider({
     if (customColors.foregroundColor) {
       console.log("Applying foreground color:", customColors.foregroundColor);
       
-      // Set CSS variable for Tailwind
-      root.style.setProperty('--foreground', customColors.foregroundColor);
+      // Set CSS variable for Tailwind (both formats for wider compatibility)
+      const hslValue = hexToHsl(customColors.foregroundColor);
+      root.style.setProperty('--foreground', hslValue);
       
       // Apply directly to elements - this applies to all text
       document.body.style.color = customColors.foregroundColor;
       
       // Target specific text elements to ensure consistent application
-      document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6').forEach(elem => {
+      document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, .text-foreground').forEach(elem => {
         // Don't override elements that have explicit color classes
         let hasExplicitColor = false;
-        for (let i = 0; i < elem.classList.length; i++) {
-          const cls = elem.classList[i];
-          if (cls.startsWith('text-') && cls !== 'text-foreground') {
-            hasExplicitColor = true;
-            break;
+        if (elem.classList) {
+          for (let i = 0; i < elem.classList.length; i++) {
+            const cls = elem.classList[i];
+            if (cls.startsWith('text-') && cls !== 'text-foreground') {
+              hasExplicitColor = true;
+              break;
+            }
           }
         }
         
@@ -207,11 +217,14 @@ export function ThemeProvider({
         }
       });
     } else {
+      // Remove CSS variables
       root.style.removeProperty('--foreground');
+      
+      // Reset direct style
       document.body.style.removeProperty('color');
       
       // Reset text elements
-      document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6').forEach(elem => {
+      document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, .text-foreground').forEach(elem => {
         (elem as HTMLElement).style.removeProperty('color');
       });
     }
@@ -220,15 +233,32 @@ export function ThemeProvider({
     const primaryColor = customColors.primaryColor || '';
     if (primaryColor) {
       console.log("Applying primary color:", primaryColor);
-      root.style.setProperty('--primary', primaryColor);
+      
+      // Set CSS variable for Tailwind (both formats for compatibility)
+      const hslValue = hexToHsl(primaryColor);
+      root.style.setProperty('--primary', hslValue);
       
       // Update all primary buttons globally
       document.querySelectorAll('.bg-primary').forEach(button => {
         (button as HTMLElement).style.backgroundColor = primaryColor;
       });
+      
+      // Apply to all elements with primary background
+      document.querySelectorAll('[class*="primary"]').forEach(elem => {
+        if (elem.classList) {
+          for (let i = 0; i < elem.classList.length; i++) {
+            const cls = elem.classList[i];
+            if (cls.includes('bg-primary')) {
+              (elem as HTMLElement).style.backgroundColor = primaryColor;
+            }
+          }
+        }
+      });
     } else {
       root.style.removeProperty('--primary');
-      document.querySelectorAll('.bg-primary').forEach(button => {
+      
+      // Reset elements
+      document.querySelectorAll('.bg-primary, [class*="primary"]').forEach(button => {
         (button as HTMLElement).style.removeProperty('background-color');
       });
     }
@@ -237,11 +267,14 @@ export function ThemeProvider({
     const accentColor = customColors.accentColor || '';
     if (accentColor) {
       console.log("Applying accent color:", accentColor);
-      root.style.setProperty('--accent', accentColor);
+      
+      // Set CSS variable for Tailwind
+      const hslValue = hexToHsl(accentColor);
+      root.style.setProperty('--accent', hslValue);
       
       // Apply to accent-specific elements
-      document.querySelectorAll('.text-primary, .border-primary').forEach(elem => {
-        if (elem.classList.contains('text-primary')) {
+      document.querySelectorAll('.text-primary, .border-primary, .text-accent').forEach(elem => {
+        if (elem.classList.contains('text-primary') || elem.classList.contains('text-accent')) {
           (elem as HTMLElement).style.color = accentColor;
         }
         if (elem.classList.contains('border-primary')) {
@@ -250,7 +283,7 @@ export function ThemeProvider({
       });
       
       // Apply accent color to active nav items
-      document.querySelectorAll('.active-nav-item').forEach(item => {
+      document.querySelectorAll('.active-nav-item, .active').forEach(item => {
         (item as HTMLElement).style.color = accentColor;
         (item as HTMLElement).style.borderColor = accentColor;
       });
@@ -258,8 +291,8 @@ export function ThemeProvider({
       root.style.removeProperty('--accent');
       
       // Reset accent elements
-      document.querySelectorAll('.text-primary, .border-primary').forEach(elem => {
-        if (elem.classList.contains('text-primary')) {
+      document.querySelectorAll('.text-primary, .border-primary, .text-accent').forEach(elem => {
+        if (elem.classList.contains('text-primary') || elem.classList.contains('text-accent')) {
           (elem as HTMLElement).style.removeProperty('color');
         }
         if (elem.classList.contains('border-primary')) {
@@ -267,7 +300,7 @@ export function ThemeProvider({
         }
       });
       
-      document.querySelectorAll('.active-nav-item').forEach(item => {
+      document.querySelectorAll('.active-nav-item, .active').forEach(item => {
         (item as HTMLElement).style.removeProperty('color');
         (item as HTMLElement).style.removeProperty('border-color');
       });
