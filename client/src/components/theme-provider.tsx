@@ -310,7 +310,10 @@ export function ThemeProvider({
     const cardColor = customColors.cardColor || '';
     if (cardColor) {
       console.log("Applying card color:", cardColor);
-      root.style.setProperty('--card', cardColor);
+      
+      // Set CSS variable for Tailwind (both formats for wider compatibility)
+      const hslValue = hexToHsl(cardColor);
+      root.style.setProperty('--card', hslValue);
       
       // Apply to all card elements - more general selector to catch all card-like elements
       document.querySelectorAll('.bg-card, [class*="card"], .rounded-md, .theme-preview-area .p-3').forEach(card => {
@@ -346,10 +349,10 @@ export function ThemeProvider({
     
     // Clean up function to remove custom properties when component unmounts
     return () => {
-      // Reset all properties
+      // Reset all properties - using the correct names for CSS variables
       const properties = [
-        '--background-color', '--foreground-color', 
-        '--accent-color', '--primary-color', '--card-color'
+        '--background', '--foreground', 
+        '--accent', '--primary', '--card'
       ];
       properties.forEach(prop => root.style.removeProperty(prop));
       
