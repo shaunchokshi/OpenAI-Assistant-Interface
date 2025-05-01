@@ -11,7 +11,8 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  Brain
 } from "lucide-react";
 
 interface SidebarProps {
@@ -32,20 +33,21 @@ const Sidebar = ({ collapsed = false, onToggle, isMobile = false }: SidebarProps
     return location === path;
   };
 
-  // Filter menu items based on user role
-  const isAdmin = user?.role === "admin" || user?.email === "test@example.com"; // Temporarily making test user an admin
+  // Filter menu items based on user email (treating test@example.com as admin)
+  const isAdmin = user?.email === "test@example.com";
   
   const menuItems = [
     { path: "/", icon: <Home size={20} />, label: "Home" },
     { path: "/chat", icon: <MessageSquare size={20} />, label: "Chat" },
     { path: "/files", icon: <FileText size={20} />, label: "Files" },
     { path: "/analytics", icon: <BarChart2 size={20} />, label: "Analytics" },
+    { path: "/fine-tuning", icon: <Brain size={20} />, label: "Fine-Tuning" },
     { path: "/settings", icon: <Settings size={20} />, label: "Settings" },
   ];
   
   // Add admin-only items
   if (isAdmin) {
-    menuItems.splice(4, 0, { path: "/users", icon: <Users size={20} />, label: "Users" });
+    menuItems.splice(5, 0, { path: "/users", icon: <Users size={20} />, label: "Users" });
   }
 
   // Handle sidebar width based on collapsed state and if it's mobile
