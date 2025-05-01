@@ -129,9 +129,13 @@ export interface IStorage {
   // Fine-tuned models management
   createFineTunedModel(modelData: InsertFineTunedModel): Promise<FineTunedModel>;
   getFineTunedModel(id: number): Promise<FineTunedModel | undefined>;
+  getFineTunedModelByOpenAIId(openaiModelId: string): Promise<FineTunedModel | undefined>;
   getUserFineTunedModels(userId: number): Promise<FineTunedModel[]>;
   updateFineTunedModelStatus(id: number, isActive: boolean): Promise<void>;
   deleteFineTunedModel(id: number): Promise<void>;
+  
+  // File retrieval by ID (already implemented in other methods but needed explicitly)
+  getFile(id: number): Promise<File | undefined>;
 
   // Session store
   sessionStore: session.Store;
@@ -791,6 +795,120 @@ export class DatabaseStorage implements IStorage {
       totalCost,
       periodSummaries
     };
+  }
+  
+  // Fine-tuning management methods
+  
+  async createFineTuningJob(jobData: InsertFineTuningJob): Promise<FineTuningJob> {
+    const [job] = await db
+      .insert(fineTuningJobs)
+      .values({
+        ...jobData,
+        updatedAt: new Date()
+      })
+      .returning();
+      
+    return job;
+  }
+  
+  async getFineTuningJob(id: number): Promise<FineTuningJob | undefined> {
+    const [job] = await db
+      .select()
+      .from(fineTuningJobs)
+      .where(eq(fineTuningJobs.id, id));
+      
+    return job;
+  }
+  
+  async getFineTuningJobByOpenAIId(openaiJobId: string): Promise<FineTuningJob | undefined> {
+    const [job] = await db
+      .select()
+      .from(fineTuningJobs)
+      .where(eq(fineTuningJobs.openaiJobId, openaiJobId));
+      
+    return job;
+  }
+  
+  async getUserFineTuningJobs(userId: number): Promise<FineTuningJob[]> {
+    return await db
+      .select()
+      .from(fineTuningJobs)
+      .where(eq(fineTuningJobs.userId, userId))
+      .orderBy(desc(fineTuningJobs.createdAt));
+  }
+  
+  async updateFineTuningJob(id: number, data: UpdateFineTuningJob): Promise<FineTuningJob> {
+    const [updated] = await db
+      .update(fineTuningJobs)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(fineTuningJobs.id, id))
+      .returning();
+      
+    return updated;
+  }
+  
+  async deleteFineTuningJob(id: number): Promise<void> {
+    await db.delete(fineTuningJobs).where(eq(fineTuningJobs.id, id));
+  }
+  
+  // Fine-tuned models management methods
+  
+  async createFineTunedModel(modelData: InsertFineTunedModel): Promise<FineTunedModel> {
+    const [model] = await db
+      .insert(fineTunedModels)
+      .values(modelData)
+      .returning();
+      
+    return model;
+  }
+  
+  async getFineTunedModel(id: number): Promise<FineTunedModel | undefined> {
+    const [model] = await db
+      .select()
+      .from(fineTunedModels)
+      .where(eq(fineTunedModels.id, id));
+      
+    return model;
+  }
+  
+  async getFineTunedModelByOpenAIId(openaiModelId: string): Promise<FineTunedModel | undefined> {
+    const [model] = await db
+      .select()
+      .from(fineTunedModels)
+      .where(eq(fineTunedModels.openaiModelId, openaiModelId));
+      
+    return model;
+  }
+  
+  async getFile(id: number): Promise<File | undefined> {
+    const [file] = await db
+      .select()
+      .from(files)
+      .where(eq(files.id, id));
+      
+    return file;
+  }
+  
+  async getUserFineTunedModels(userId: number): Promise<FineTunedModel[]> {
+    return await db
+      .select()
+      .from(fineTunedModels)
+      .where(eq(fineTunedModels.userId, userId))
+      .orderBy(desc(fineTunedModels.createdAt));
+  }
+  
+  async updateFineTunedModelStatus(id: number, isActive: boolean): Promise<void> {
+    await db
+      .update(fineTunedModels)
+      .set({ isActive })
+      .where(eq(fineTunedModels.id, id));
+  }
+  
+  async deleteFineTunedModel(id: number): Promise<void> {
+    await db.delete(fineTunedModels).where(eq(fineTunedModels.id, id));
   }
 }
 
