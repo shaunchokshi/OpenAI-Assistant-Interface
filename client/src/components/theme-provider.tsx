@@ -8,6 +8,8 @@ type CustomColors = {
   accentColor?: string;
   backgroundColor?: string;
   foregroundColor?: string;
+  primaryColor?: string;
+  cardColor?: string;
 };
 
 type ThemeProviderProps = {
@@ -65,6 +67,11 @@ export function ThemeProvider({
         if (data.accentColor) colors.accentColor = data.accentColor;
         if (data.backgroundColor) colors.backgroundColor = data.backgroundColor;
         if (data.foregroundColor) colors.foregroundColor = data.foregroundColor;
+        if (data.primaryColor) colors.primaryColor = data.primaryColor;
+        if (data.cardColor) colors.cardColor = data.cardColor;
+        
+        // Log to confirm we're loading colors correctly
+        console.log("Loaded custom colors from server:", colors);
         
         setCustomColorsState(colors);
         return data;
@@ -168,23 +175,25 @@ export function ThemeProvider({
       document.body.style.removeProperty('color');
     }
     
-    if (customColors.accentColor) {
-      root.style.setProperty('--accent-color', customColors.accentColor);
+    // Apply accent/primary color
+    const accentColor = customColors.accentColor || '';
+    if (accentColor) {
+      root.style.setProperty('--accent-color', accentColor);
       
       // Update primary button colors
       const buttons = document.querySelectorAll('.bg-primary');
       buttons.forEach(button => {
-        (button as HTMLElement).style.backgroundColor = customColors.accentColor;
+        (button as HTMLElement).style.backgroundColor = accentColor;
       });
       
       // Update selected items, borders, etc.
       const primaryElems = document.querySelectorAll('.text-primary, .border-primary, .hover\\:text-primary');
       primaryElems.forEach(elem => {
         if (elem.classList.contains('text-primary')) {
-          (elem as HTMLElement).style.color = customColors.accentColor;
+          (elem as HTMLElement).style.color = accentColor;
         }
         if (elem.classList.contains('border-primary')) {
-          (elem as HTMLElement).style.borderColor = customColors.accentColor;
+          (elem as HTMLElement).style.borderColor = accentColor;
         }
       });
     } else {
@@ -207,10 +216,47 @@ export function ThemeProvider({
       });
     }
     
+    // Apply primary color (might be different from accent)
+    const primaryColor = customColors.primaryColor || '';
+    if (primaryColor) {
+      root.style.setProperty('--primary-color', primaryColor);
+      
+      // Find an appropriate element to style with the primary color
+      const buttons = document.querySelectorAll('.bg-primary');
+      buttons.forEach(button => {
+        (button as HTMLElement).style.backgroundColor = primaryColor;
+      });
+    } else {
+      root.style.removeProperty('--primary-color');
+    }
+    
+    // Apply card color
+    const cardColor = customColors.cardColor || '';
+    if (cardColor) {
+      root.style.setProperty('--card-color', cardColor);
+      
+      // Apply to all card elements
+      const cards = document.querySelectorAll('.bg-card, .theme-preview-area .rounded-md');
+      cards.forEach(card => {
+        (card as HTMLElement).style.backgroundColor = cardColor;
+      });
+    } else {
+      root.style.removeProperty('--card-color');
+      
+      // Reset cards
+      const cards = document.querySelectorAll('.bg-card, .theme-preview-area .rounded-md');
+      cards.forEach(card => {
+        (card as HTMLElement).style.removeProperty('background-color');
+      });
+    }
+    
     // Clean up function to remove custom properties when component unmounts
     return () => {
       // Reset all properties
-      const properties = ['--background-color', '--foreground-color', '--accent-color'];
+      const properties = [
+        '--background-color', '--foreground-color', 
+        '--accent-color', '--primary-color', '--card-color'
+      ];
       properties.forEach(prop => root.style.removeProperty(prop));
       
       // Reset direct style overrides
@@ -231,6 +277,12 @@ export function ThemeProvider({
         if (elem.classList.contains('border-primary')) {
           (elem as HTMLElement).style.removeProperty('border-color');
         }
+      });
+      
+      // Reset card elements
+      const cards = document.querySelectorAll('.bg-card, .theme-preview-area .rounded-md');
+      cards.forEach(card => {
+        (card as HTMLElement).style.removeProperty('background-color');
       });
     };
   }, [theme, customColors]);
