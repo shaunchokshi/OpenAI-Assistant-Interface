@@ -120,9 +120,8 @@ export default function FilesPage() {
     }
 
     const formData = new FormData();
-    for (let i = 0; i < selectedFiles.length; i++) {
-      formData.append("files", selectedFiles[i]);
-    }
+    // Only upload the first file for now (API expects a single file)
+    formData.append("file", selectedFiles[0]);
     formData.append("purpose", "assistants");
 
     uploadMutation.mutate(formData);
