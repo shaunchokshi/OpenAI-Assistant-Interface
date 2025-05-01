@@ -107,13 +107,17 @@ export default function UserPreferences() {
         setProviderCustomColors({
           backgroundColor: data.backgroundColor,
           foregroundColor: data.foregroundColor,
-          accentColor: data.accentColor
+          primaryColor: data.primaryColor,
+          accentColor: data.accentColor,
+          cardColor: data.cardColor
         });
         
         console.log("Applied custom colors from DB:", {
           backgroundColor: data.backgroundColor,
           foregroundColor: data.foregroundColor,
-          accentColor: data.accentColor
+          primaryColor: data.primaryColor,
+          accentColor: data.accentColor,
+          cardColor: data.cardColor
         });
       } else {
         // Clear provider custom colors when not enabled
@@ -149,13 +153,28 @@ export default function UserPreferences() {
   
   // Sync custom colors from provider
   useEffect(() => {
-    if (providerCustomColors.backgroundColor || providerCustomColors.foregroundColor || providerCustomColors.accentColor) {
+    if (providerCustomColors.backgroundColor || 
+        providerCustomColors.foregroundColor || 
+        providerCustomColors.accentColor ||
+        providerCustomColors.primaryColor ||
+        providerCustomColors.cardColor) {
+      
       setCustomColorsEnabled(true);
       setCustomColors({
         ...customColors,
         background: providerCustomColors.backgroundColor || customColors.background,
         foreground: providerCustomColors.foregroundColor || customColors.foreground,
-        accent: providerCustomColors.accentColor || customColors.accent
+        primary: providerCustomColors.primaryColor || customColors.primary,
+        accent: providerCustomColors.accentColor || customColors.accent,
+        card: providerCustomColors.cardColor || customColors.card
+      });
+      
+      console.log("Updated local color state from provider:", {
+        background: providerCustomColors.backgroundColor || customColors.background,
+        foreground: providerCustomColors.foregroundColor || customColors.foreground,
+        primary: providerCustomColors.primaryColor || customColors.primary,
+        accent: providerCustomColors.accentColor || customColors.accent,
+        card: providerCustomColors.cardColor || customColors.card
       });
     }
   }, [providerCustomColors]);
@@ -175,7 +194,17 @@ export default function UserPreferences() {
         setProviderCustomColors({
           backgroundColor: customColors.background,
           foregroundColor: customColors.foreground,
-          accentColor: customColors.accent
+          primaryColor: customColors.primary,
+          accentColor: customColors.accent,
+          cardColor: customColors.card
+        });
+        
+        console.log("Applied colors after save success:", {
+          background: customColors.background,
+          foreground: customColors.foreground,
+          primary: customColors.primary,
+          accent: customColors.accent,
+          card: customColors.card
         });
       } else {
         // If custom colors are disabled, reset to defaults
