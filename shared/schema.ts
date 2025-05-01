@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   password: text("password"), // Can be null for social login users
   name: varchar("name", { length: 255 }),
   picture: varchar("picture", { length: 1024 }),
+  role: varchar("role", { length: 50 }).default("user"), // Possible values: user, admin, editor
   openaiKeyHash: varchar("openai_key_hash", { length: 255 }),
   defaultAssistantId: integer("default_assistant_id"),
   resetAt: timestamp("reset_at"),
@@ -110,6 +111,22 @@ export const usageAnalytics = pgTable("usage_analytics", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  theme: varchar("theme", { length: 50 }).default("dark"), // light, dark, system
+  customColors: boolean("custom_colors").default(false),
+  backgroundColor: varchar("background_color", { length: 50 }),
+  foregroundColor: varchar("foreground_color", { length: 50 }),
+  primaryColor: varchar("primary_color", { length: 50 }),
+  accentColor: varchar("accent_color", { length: 50 }),
+  cardColor: varchar("card_color", { length: 50 }),
+  notificationsEnabled: boolean("notifications_enabled").default(true),
+  soundEnabled: boolean("sound_enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Schemas for inserts and validation
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -155,6 +172,14 @@ export const usageAnalyticsSchema = createInsertSchema(usageAnalytics, {
   createdAt: undefined
 });
 
+export const userPreferencesSchema = createInsertSchema(userPreferences, {
+  id: undefined,
+  createdAt: undefined,
+  updatedAt: undefined
+});
+
+export const updateUserPreferencesSchema = userPreferencesSchema.partial().omit({ userId: true });
+
 // Types
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -164,6 +189,8 @@ export type UpdateAssistant = z.infer<typeof updateAssistantSchema>;
 export type ApiKeyUpdate = z.infer<typeof apiKeySchema>;
 export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 export type InsertUsageAnalytic = z.infer<typeof usageAnalyticsSchema>;
+export type InsertUserPreferences = z.infer<typeof userPreferencesSchema>;
+export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Assistant = typeof assistants.$inferSelect;
@@ -174,3 +201,4 @@ export type OAuthProfile = typeof oauthProfiles.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type UserSession = typeof userSessions.$inferSelect;
 export type UsageAnalytic = typeof usageAnalytics.$inferSelect;
+export type UserPreferences = typeof userPreferences.$inferSelect;

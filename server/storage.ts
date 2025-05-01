@@ -81,6 +81,11 @@ export interface IStorage {
   getAssistantFiles(assistantId: number): Promise<File[]>;
   deleteFile(id: number): Promise<void>;
   
+  // User Preferences management
+  getUserPreferences(userId: number): Promise<UserPreferences | undefined>;
+  createUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences>;
+  updateUserPreferences(userId: number, preferences: UpdateUserPreferences): Promise<UserPreferences>;
+  
   // Usage Analytics
   trackUsage(usageData: InsertUsageAnalytic): Promise<UsageAnalytic>;
   getUserUsageAnalytics(userId: number, options?: {
