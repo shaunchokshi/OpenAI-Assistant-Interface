@@ -220,7 +220,7 @@ export default function UserPreferences() {
   };
 
   const handleSavePreferences = () => {
-    const preferencesData = {
+    const preferencesData: Record<string, any> = {
       theme: selectedTheme,
       notificationsEnabled,
       soundEnabled
@@ -228,9 +228,9 @@ export default function UserPreferences() {
     
     // Add custom colors if enabled
     if (customColorsEnabled) {
-      preferencesData['backgroundColor'] = customColors.background;
-      preferencesData['foregroundColor'] = customColors.foreground;
-      preferencesData['accentColor'] = customColors.accent;
+      preferencesData.backgroundColor = customColors.background;
+      preferencesData.foregroundColor = customColors.foreground;
+      preferencesData.accentColor = customColors.accent;
     }
     
     savePreferencesMutation.mutate(preferencesData);
@@ -517,6 +517,7 @@ export default function UserPreferences() {
                         variant="destructive"
                         className="mt-2"
                         onClick={() => {
+                          // Reset color inputs
                           setCustomColors({
                             background: "",
                             foreground: "",
@@ -524,6 +525,10 @@ export default function UserPreferences() {
                             accent: "",
                             card: ""
                           });
+                          
+                          // Clear custom colors from the provider
+                          setProviderCustomColors({});
+                          
                           toast({
                             title: "Colors Reset",
                             description: "Custom colors have been reset to theme defaults.",
@@ -537,11 +542,16 @@ export default function UserPreferences() {
                         variant="outline"
                         className="mt-2"
                         onClick={() => {
-                          // Apply custom colors preview
-                          // This is just a preview, actual implementation would modify CSS variables
+                          // Apply custom colors preview using the provider
+                          setProviderCustomColors({
+                            backgroundColor: customColors.background,
+                            foregroundColor: customColors.foreground,
+                            accentColor: customColors.accent
+                          });
+                          
                           toast({
                             title: "Colors Applied",
-                            description: "Custom colors have been applied as a preview.",
+                            description: "Custom colors have been applied as a preview. Save preferences to keep these changes.",
                           });
                         }}
                       >
