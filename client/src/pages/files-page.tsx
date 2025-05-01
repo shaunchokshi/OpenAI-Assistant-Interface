@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Upload, File, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { FileText, Upload, File, Loader2, Download, Trash2 } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 export default function FilesPage() {
   // Setup query to fetch files

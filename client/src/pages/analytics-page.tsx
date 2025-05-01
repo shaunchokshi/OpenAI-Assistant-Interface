@@ -7,7 +7,7 @@ export default function AnalyticsPage() {
   
   return (
     <div className="flex-1 p-8">
-      <h2 className="text-3xl font-bold mb-6">Analytics Dashboard</h2>
+      <h2 className="text-3xl font-bold mb-6">Usage Analytics</h2>
       
       {!user ? (
         <div className="flex justify-center items-center h-80">
