@@ -3,10 +3,13 @@ import session from "express-session";
 import { db, pool } from "./db";
 import { 
   users, assistants, threads, messages, files, oauthProfiles, userSessions, usageAnalytics, userPreferences,
+  fineTuningJobs, fineTunedModels,
   type User, type InsertUser, type Assistant, type InsertAssistant, 
   type UpdateAssistant, type Thread, type Message, type File,
   type OAuthProfile, type UserSession, type UsageAnalytic, type InsertUsageAnalytic,
-  type UserPreferences, type InsertUserPreferences, type UpdateUserPreferences
+  type UserPreferences, type InsertUserPreferences, type UpdateUserPreferences,
+  type FineTuningJob, type InsertFineTuningJob, type UpdateFineTuningJob, 
+  type FineTunedModel, type InsertFineTunedModel
 } from "@shared/schema";
 import { eq, and, desc, sql, asc, lte, gte } from "drizzle-orm";
 import { createHash } from "crypto";
@@ -115,6 +118,21 @@ export interface IStorage {
     }>;
   }>;
   
+  // Fine-tuning management
+  createFineTuningJob(jobData: InsertFineTuningJob): Promise<FineTuningJob>;
+  getFineTuningJob(id: number): Promise<FineTuningJob | undefined>;
+  getFineTuningJobByOpenAIId(openaiJobId: string): Promise<FineTuningJob | undefined>;
+  getUserFineTuningJobs(userId: number): Promise<FineTuningJob[]>;
+  updateFineTuningJob(id: number, data: UpdateFineTuningJob): Promise<FineTuningJob>;
+  deleteFineTuningJob(id: number): Promise<void>;
+  
+  // Fine-tuned models management
+  createFineTunedModel(modelData: InsertFineTunedModel): Promise<FineTunedModel>;
+  getFineTunedModel(id: number): Promise<FineTunedModel | undefined>;
+  getUserFineTunedModels(userId: number): Promise<FineTunedModel[]>;
+  updateFineTunedModelStatus(id: number, isActive: boolean): Promise<void>;
+  deleteFineTunedModel(id: number): Promise<void>;
+
   // Session store
   sessionStore: session.Store;
 }
