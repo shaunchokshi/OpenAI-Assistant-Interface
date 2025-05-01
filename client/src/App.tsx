@@ -30,6 +30,7 @@ function Router() {
       <ProtectedRoute path="/files" component={FilesPage} />
       <ProtectedRoute path="/analytics" component={AnalyticsPage} />
       <ProtectedRoute path="/chat" component={ChatPage} />
+      <ProtectedRoute path="/fine-tuning" component={FineTuningPage} />
       <ProtectedRoute path="/users" component={UsersPage} />
       <Route path="/auth">
         <AuthPage />
