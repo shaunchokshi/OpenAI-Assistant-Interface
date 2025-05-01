@@ -6,7 +6,7 @@ import { setupAuth } from "./auth";
 import { cacheMiddleware } from "./cache";
 import { chatWithAssistant, initThread, uploadFiles, validateUserApiKey, createOpenAIClient } from "./openai";
 import { storage, hashApiKey } from "./storage";
-import { apiKeySchema, assistantSchema, updateAssistantSchema } from "@shared/schema";
+import { apiKeySchema, assistantSchema, updateAssistantSchema, userPreferencesSchema, updateUserPreferencesSchema } from "@shared/schema";
 import fs from "fs";
 import { logger } from "./logger";
 
@@ -206,6 +206,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating default assistant:", error);
       return res.status(500).json({ error: "Failed to update default assistant" });
+    }
+  });
+  
+  // Get user preferences
+  app.get("/api/settings/preferences", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      // Get user preferences from database
+      const preferences = await storage.getUserPreferences(req.user.id);
+      
+      if (!preferences) {
+        // Return default preferences if none exist yet
+        return res.json({
+          theme: "dark",
+          accentColor: "#7C3AED", // Default purple
+          backgroundColor: "#1E293B", // Default dark blue-gray
+          foregroundColor: "#FFFFFF" // Default white
+        });
+      }
+      
+      return res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching user preferences:", error);
+      return res.status(500).json({ error: "Failed to fetch user preferences" });
+    }
+  });
+  
+  // Update user preferences
+  app.post("/api/settings/preferences", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      // Validate preferences data
+      const preferencesData = updateUserPreferencesSchema.parse(req.body);
+      
+      // Update or create preferences
+      const preferences = await storage.updateUserPreferences(req.user.id, preferencesData);
+      
+      return res.json(preferences);
+    } catch (error: any) {
+      console.error("Error updating user preferences:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid preferences data", details: error.errors });
+      }
+      return res.status(500).json({ error: "Failed to update user preferences" });
     }
   });
   

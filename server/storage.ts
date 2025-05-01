@@ -2,10 +2,11 @@ import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { db, pool } from "./db";
 import { 
-  users, assistants, threads, messages, files, oauthProfiles, userSessions, usageAnalytics,
+  users, assistants, threads, messages, files, oauthProfiles, userSessions, usageAnalytics, userPreferences,
   type User, type InsertUser, type Assistant, type InsertAssistant, 
   type UpdateAssistant, type Thread, type Message, type File,
-  type OAuthProfile, type UserSession, type UsageAnalytic, type InsertUsageAnalytic
+  type OAuthProfile, type UserSession, type UsageAnalytic, type InsertUsageAnalytic,
+  type UserPreferences, type InsertUserPreferences, type UpdateUserPreferences
 } from "@shared/schema";
 import { eq, and, desc, sql, asc, lte, gte } from "drizzle-orm";
 import { createHash } from "crypto";
@@ -549,6 +550,47 @@ export class DatabaseStorage implements IStorage {
   
   async deleteFile(id: number): Promise<void> {
     await db.delete(files).where(eq(files.id, id));
+  }
+  
+  // User Preferences methods
+  
+  async getUserPreferences(userId: number): Promise<UserPreferences | undefined> {
+    const [preferences] = await db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId));
+    
+    return preferences;
+  }
+  
+  async createUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences> {
+    const [newPreferences] = await db
+      .insert(userPreferences)
+      .values(preferences)
+      .returning();
+    
+    return newPreferences;
+  }
+  
+  async updateUserPreferences(userId: number, preferences: UpdateUserPreferences): Promise<UserPreferences> {
+    const [updated] = await db
+      .update(userPreferences)
+      .set({
+        ...preferences,
+        updatedAt: new Date()
+      })
+      .where(eq(userPreferences.userId, userId))
+      .returning();
+    
+    if (!updated) {
+      // If no preferences exist for this user, create them
+      return this.createUserPreferences({
+        userId,
+        ...preferences
+      });
+    }
+    
+    return updated;
   }
 
   // Usage Analytics methods
