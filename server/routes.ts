@@ -570,28 +570,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "File size exceeds 50MB limit" });
       }
       
-      // For now, return a mock success response for testing
-      return res.status(201).json({
-        id: Math.floor(Math.random() * 1000),
-        filename: uploadedFile.name,
-        size: uploadedFile.size,
-        purpose: purpose,
-        createdAt: new Date().toISOString()
-      });
-      
-      // Comment out the real implementation for now
-      /*
-      // Validate OpenAI API key
-      const validationResult = validateUserApiKey(req.user);
-      if (validationResult) {
-        return res.status(400).json(validationResult);
+      // Instead of relying on OpenAI integration right now, let's just store the file in the database
+      try {
+        // Store file reference in database directly without sending to OpenAI
+        // This is a temporary solution until the OpenAI integration is fixed
+        const storedFile = await storage.addFile(
+          req.user.id,
+          `local_${Date.now()}`, // Generate a local ID until OpenAI integration works
+          uploadedFile.name,
+          purpose,
+          uploadedFile.size,
+          undefined // not associated with an assistant yet
+        );
+        
+        // Return the stored file details
+        return res.status(201).json(storedFile);
+      } catch (error: any) {
+        console.error("Database storage error:", error);
+        return res.status(500).json({ 
+          error: "Failed to store file record in database",
+          details: error.message || "Unknown error"
+        });
       }
       
-      // Create OpenAI client with user's API key (we know it exists after validation)
-      const openai = createOpenAIClient(req.user.openaiKeyHash!);
-      */
-      
+      /* Original OpenAI implementation - commented for now 
+      // Real implementation with OpenAI is below - will be enabled once OpenAI API integration is fixed
       try {
+        // Validate OpenAI API key
+        const validationResult = validateUserApiKey(req.user);
+        if (validationResult) {
+          return res.status(400).json(validationResult);
+        }
+        
+        // Create OpenAI client with user's API key
+        const openai = createOpenAIClient(req.user.openaiKeyHash!);
+        
         // Upload file to OpenAI
         const file = await openai.files.create({
           file: fs.createReadStream(uploadedFile.tempFilePath),
@@ -629,6 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: error.message
         });
       }
+      */
     } catch (error) {
       console.error("File upload error:", error);
       res.status(500).json({ error: "Internal server error during file upload" });
@@ -636,6 +650,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Delete a file
+  app.delete("/api/files/:id", ensureAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const fileId = parseInt(req.params.id, 10);
+      
+      // First get the file to check permissions and get the OpenAI file ID
+      const files = await storage.getUserFiles(req.user.id);
+      const file = files.find(f => f.id === fileId);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found or you don't have permission to delete it" });
+      }
+      
+      // For now, just delete the file from our database without interacting with OpenAI
+      try {
+        // Delete file reference from database
+        await storage.deleteFile(fileId);
+        
+        return res.status(200).json({ message: "File deleted successfully" });
+      } catch (error: any) {
+        console.error("Database file deletion error:", error);
+        
+        return res.status(500).json({ 
+          error: "Failed to delete file from database",
+          details: error.message
+        });
+      }
+    } catch (error) {
+      console.error("File deletion error:", error);
+      return res.status(500).json({ error: "Internal server error during file deletion" });
+    }
+  });
+  
+  // Original OpenAI file implementation - commented for now
+  /*
   app.delete("/api/files/:id", ensureAuthenticated, async (req: Request, res: Response) => {
     try {
       if (!req.user?.id) {
@@ -692,6 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: "Internal server error during file deletion" });
     }
   });
+  */
 
   // Health check with 1-minute cache
   app.get("/api/health", cacheMiddleware(60), async (req, res) => {

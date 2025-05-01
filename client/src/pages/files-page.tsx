@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Upload, File, Loader2, Download, Trash2 } from "lucide-react";
+import { FileText, Upload, File, Loader2, Download, Trash2, Image, FileCode, FileSpreadsheet, Presentation } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -166,21 +166,77 @@ export default function FilesPage() {
     { id: 5, filename: "image.jpg", size: "3.2 MB", date: "2025-04-15", type: "image" },
   ];
 
-  // File type icons
-  const getFileIcon = (type: string) => {
-    switch (type) {
-      case "pdf":
-        return <File className="text-red-500" />;
-      case "excel":
-        return <File className="text-green-500" />;
-      case "powerpoint":
-        return <File className="text-orange-500" />;
-      case "text":
-        return <FileText className="text-blue-500" />;
-      case "image":
-        return <File className="text-purple-500" />;
+  // Helper function to determine file type from filename
+  function getFileTypeFromName(filename: string): string {
+    if (!filename) return 'unknown';
+    
+    const extension = filename.split('.').pop()?.toLowerCase() || '';
+    
+    switch (extension) {
+      case 'pdf':
+        return 'pdf';
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'svg':
+      case 'webp':
+        return 'image';
+      case 'doc':
+      case 'docx':
+      case 'txt':
+      case 'rtf':
+      case 'md':
+        return 'document';
+      case 'xls':
+      case 'xlsx':
+      case 'csv':
+        return 'spreadsheet';
+      case 'ppt':
+      case 'pptx':
+        return 'presentation';
+      case 'js':
+      case 'ts':
+      case 'jsx':
+      case 'tsx':
+      case 'html':
+      case 'css':
+      case 'json':
+      case 'py':
+      case 'java':
+      case 'c':
+      case 'cpp':
+      case 'go':
+      case 'rs':
+      case 'rb':
+      case 'php':
+        return 'code';
       default:
-        return <File className="text-gray-500" />;
+        return 'unknown';
+    }
+  }
+
+  // File type icons
+  const getFileIcon = (type: string = 'unknown') => {
+    switch (type) {
+      case 'pdf':
+        return <FileText className="h-6 w-6 text-red-500" />;
+      case 'image':
+        return <Image className="h-6 w-6 text-blue-500" />;
+      case 'document':
+        return <FileText className="h-6 w-6 text-blue-700" />;
+      case 'spreadsheet':
+      case 'excel':
+        return <FileSpreadsheet className="h-6 w-6 text-green-600" />;
+      case 'presentation':
+      case 'powerpoint':
+        return <Presentation className="h-6 w-6 text-orange-500" />;
+      case 'code':
+        return <FileCode className="h-6 w-6 text-purple-600" />;
+      case 'text':
+        return <FileText className="h-6 w-6 text-blue-500" />;
+      default:
+        return <File className="h-6 w-6 text-gray-500" />;
     }
   };
 
@@ -258,19 +314,21 @@ export default function FilesPage() {
             ) : (
               <div className="overflow-x-auto">
                 <div className="grid gap-4 min-w-[600px]">
-                  {sampleFiles.map((file) => (
+                  {(files?.length ? files : sampleFiles).map((file: any) => (
                     <div
                       key={file.id}
                       className="flex flex-wrap sm:flex-nowrap items-center justify-between p-4 rounded-lg border hover:bg-accent/20"
                     >
                       <div className="flex items-center gap-3 w-full sm:w-auto mb-3 sm:mb-0">
                         <div className="p-2 bg-primary/5 rounded shrink-0">
-                          {getFileIcon(file.type)}
+                          {getFileIcon(file.type || getFileTypeFromName(file.filename))}
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="font-medium truncate">{file.filename}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {file.size} • Uploaded on {file.date}
+                            {typeof file.size === 'number' 
+                              ? `${(file.size / 1024 / 1024).toFixed(2)} MB` 
+                              : file.size} • Uploaded on {file.date || new Date(file.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
