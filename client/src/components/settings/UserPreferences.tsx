@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function UserPreferences() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, customColors: providerCustomColors, setCustomColors: setProviderCustomColors } = useTheme();
   
   // Get current theme preferences directly from the theme provider
   // Using useState to track UI state, but actual theme is managed by ThemeProvider
@@ -49,15 +49,61 @@ export default function UserPreferences() {
   
   // Advanced theme options (custom colors)
   const [customColors, setCustomColors] = useState({
-    background: "",
-    foreground: "",
+    background: providerCustomColors.backgroundColor || "",
+    foreground: providerCustomColors.foregroundColor || "",
     primary: "",
-    accent: "",
+    accent: providerCustomColors.accentColor || "",
     card: ""
   });
   
   // Track if custom colors are enabled
-  const [customColorsEnabled, setCustomColorsEnabled] = useState(false);
+  const [customColorsEnabled, setCustomColorsEnabled] = useState(
+    !!providerCustomColors.backgroundColor || 
+    !!providerCustomColors.foregroundColor || 
+    !!providerCustomColors.accentColor
+  );
+  
+  // Fetch user preferences from the server
+  const { data: preferences } = useQuery({
+    queryKey: ['/api/settings/preferences'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/settings/preferences');
+      const data = await res.json();
+      
+      // Update UI state with preferences from server
+      if (data.theme) {
+        setSelectedTheme(data.theme as "light" | "dark" | "system");
+        setDarkMode(data.theme === "dark" || (data.theme === "system" && 
+          window.matchMedia("(prefers-color-scheme: dark)").matches));
+      }
+      
+      // Update notification preferences
+      if (data.notificationsEnabled !== undefined) {
+        setNotificationsEnabled(data.notificationsEnabled);
+      }
+      
+      if (data.soundEnabled !== undefined) {
+        setSoundEnabled(data.soundEnabled);
+      }
+      
+      // Update custom colors
+      const hasCustomColors = !!(data.accentColor || data.backgroundColor || data.foregroundColor);
+      setCustomColorsEnabled(hasCustomColors);
+      
+      if (hasCustomColors) {
+        setCustomColors({
+          background: data.backgroundColor || "",
+          foreground: data.foregroundColor || "",
+          primary: "",
+          accent: data.accentColor || "",
+          card: ""
+        });
+      }
+      
+      return data;
+    },
+    staleTime: 60000 // 1 minute
+  });
   
   // Initialize the UI with the current theme state and keep it in sync
   useEffect(() => {
@@ -81,27 +127,48 @@ export default function UserPreferences() {
     }
   }, [theme]);
   
-  // For demonstration purposes, simulate saving preferences
+  // Sync custom colors from provider
+  useEffect(() => {
+    if (providerCustomColors.backgroundColor || providerCustomColors.foregroundColor || providerCustomColors.accentColor) {
+      setCustomColorsEnabled(true);
+      setCustomColors({
+        ...customColors,
+        background: providerCustomColors.backgroundColor || customColors.background,
+        foreground: providerCustomColors.foregroundColor || customColors.foreground,
+        accent: providerCustomColors.accentColor || customColors.accent
+      });
+    }
+  }, [providerCustomColors]);
+  
+  // Save preferences to the server
   const savePreferencesMutation = useMutation({
     mutationFn: async (preferences: any) => {
-      // This would be an actual API call in the real implementation
       setIsLoading(true);
-      
-      // Note: We already apply theme changes immediately when they occur
-      // so we don't need to do it again here
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // For now, just return success
-      return { success: true };
+      const res = await apiRequest('POST', '/api/settings/preferences', preferences);
+      return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsLoading(false);
+      
+      // Apply custom colors to the provider so they're available globally
+      if (customColorsEnabled) {
+        setProviderCustomColors({
+          backgroundColor: customColors.background,
+          foregroundColor: customColors.foreground,
+          accentColor: customColors.accent
+        });
+      } else {
+        // If custom colors are disabled, reset to defaults
+        setProviderCustomColors({});
+      }
+      
       toast({
         title: "Preferences Saved",
         description: "Your preferences have been updated successfully.",
       });
+      
+      // Invalidate the preferences query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/preferences'] });
     },
     onError: (error: Error) => {
       setIsLoading(false);
@@ -153,12 +220,20 @@ export default function UserPreferences() {
   };
 
   const handleSavePreferences = () => {
-    savePreferencesMutation.mutate({
-      darkMode,
+    const preferencesData = {
+      theme: selectedTheme,
       notificationsEnabled,
-      soundEnabled,
-      theme: selectedTheme
-    });
+      soundEnabled
+    };
+    
+    // Add custom colors if enabled
+    if (customColorsEnabled) {
+      preferencesData['backgroundColor'] = customColors.background;
+      preferencesData['foregroundColor'] = customColors.foreground;
+      preferencesData['accentColor'] = customColors.accent;
+    }
+    
+    savePreferencesMutation.mutate(preferencesData);
   };
 
   return (
