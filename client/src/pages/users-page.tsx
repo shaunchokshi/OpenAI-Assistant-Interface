@@ -1,18 +1,54 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, MoreHorizontal, Users } from "lucide-react";
+import { UserPlus, MoreHorizontal, Users, Edit, Trash2, Key, CheckCircle, X, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { z } from "zod";
+
+// User form validation schema
+const userFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  role: z.enum(["Admin", "Editor", "Viewer"]),
+  password: z.string().optional(),
+});
+
+type UserFormValues = z.infer<typeof userFormSchema>;
 
 export default function UsersPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  
+  // User management state
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [currentAction, setCurrentAction] = useState("");
+  const [isActionPending, setIsActionPending] = useState(false);
+  const [popoverUser, setPopoverUser] = useState<number | null>(null);
+  
+  // Form state
+  const [formValues, setFormValues] = useState<UserFormValues>({
+    name: "",
+    email: "",
+    role: "Viewer",
+    password: "",
+  });
   
   // Check if user is admin (temporary solution - assuming test@example.com is admin)
-  const isAdmin = user?.role === "admin" || user?.email === "test@example.com";
+  const isAdmin = user?.email === "test@example.com";
   
   // Redirect if not admin
   useEffect(() => {
@@ -20,6 +56,104 @@ export default function UsersPage() {
       setLocation("/");
     }
   }, [isAdmin, setLocation]);
+  
+  // Handlers
+  const handleAddUser = () => {
+    setFormValues({
+      name: "",
+      email: "",
+      role: "Viewer",
+      password: "",
+    });
+    setIsAddUserOpen(true);
+  };
+  
+  const handleEditUser = (user: any) => {
+    setSelectedUser(user);
+    setFormValues({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+    setIsEditUserOpen(true);
+  };
+  
+  const handleDeleteUser = (user: any) => {
+    setSelectedUser(user);
+    setIsDeleteUserOpen(true);
+  };
+  
+  const handleResetPassword = (user: any) => {
+    setSelectedUser(user);
+    setIsResetPasswordOpen(true);
+  };
+  
+  const handleFormInput = (field: keyof UserFormValues, value: any) => {
+    setFormValues(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  const handleUserSubmit = () => {
+    // Validate form
+    try {
+      userFormSchema.parse(formValues);
+      
+      setIsActionPending(true);
+      
+      // Simulate API call
+      setTimeout(() => {
+        setIsActionPending(false);
+        setIsAddUserOpen(false);
+        setIsEditUserOpen(false);
+        
+        toast({
+          title: "Success",
+          description: isEditUserOpen ? "User updated successfully" : "User created successfully",
+        });
+      }, 1000);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessages = error.errors.map(e => `${e.path}: ${e.message}`).join(', ');
+        toast({
+          title: "Validation Error",
+          description: errorMessages,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+  
+  const confirmDeleteUser = () => {
+    setIsActionPending(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsActionPending(false);
+      setIsDeleteUserOpen(false);
+      
+      toast({
+        title: "Success",
+        description: `User ${selectedUser?.name} deleted successfully`,
+      });
+    }, 1000);
+  };
+  
+  const confirmResetPassword = () => {
+    setIsActionPending(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsActionPending(false);
+      setIsResetPasswordOpen(false);
+      
+      toast({
+        title: "Success",
+        description: `Password reset email sent to ${selectedUser?.email}`,
+      });
+    }, 1000);
+  };
   // Sample user data for demonstration
   const users = [
     { id: 1, name: "Test User", email: "test@example.com", role: "Admin", status: "Active", lastActive: "Today, 2:30 PM" },
