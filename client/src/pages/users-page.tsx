@@ -165,7 +165,10 @@ export default function UsersPage() {
     <div className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h2 className="text-2xl md:text-3xl font-bold">User Management</h2>
-        <Button className="flex items-center gap-2 w-full sm:w-auto">
+        <Button 
+          className="flex items-center gap-2 w-full sm:w-auto"
+          onClick={handleAddUser}
+        >
           <UserPlus size={16} /> Add User
         </Button>
       </div>
@@ -257,9 +260,41 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm hidden md:table-cell">{user.lastActive}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        <Popover open={popoverUser === user.id} onOpenChange={(open) => setPopoverUser(open ? user.id : null)}>
+                          <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-44 p-2" align="end">
+                            <div className="grid gap-1">
+                              <Button 
+                                variant="ghost" 
+                                className="flex items-center justify-start h-9 px-2 text-sm" 
+                                onClick={() => handleEditUser(user)}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                className="flex items-center justify-start h-9 px-2 text-sm" 
+                                onClick={() => handleResetPassword(user)}
+                              >
+                                <Key className="mr-2 h-4 w-4" />
+                                Reset Password
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                className="flex items-center justify-start h-9 px-2 text-sm text-red-500" 
+                                onClick={() => handleDeleteUser(user)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -277,9 +312,41 @@ export default function UsersPage() {
                         <p className="font-medium">{user.name}</p>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <Popover open={popoverUser === user.id} onOpenChange={(open) => setPopoverUser(open ? user.id : null)}>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-44 p-2" align="end">
+                          <div className="grid gap-1">
+                            <Button 
+                              variant="ghost" 
+                              className="flex items-center justify-start h-9 px-2 text-sm" 
+                              onClick={() => handleEditUser(user)}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              className="flex items-center justify-start h-9 px-2 text-sm" 
+                              onClick={() => handleResetPassword(user)}
+                            >
+                              <Key className="mr-2 h-4 w-4" />
+                              Reset Password
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              className="flex items-center justify-start h-9 px-2 text-sm text-red-500" 
+                              onClick={() => handleDeleteUser(user)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant={user.role === "Admin" ? "default" : user.role === "Editor" ? "outline" : "secondary"}>
@@ -297,6 +364,184 @@ export default function UsersPage() {
           </CardContent>
         </Card>
       </div>
+      {/* Add/Edit User Dialog */}
+      <Dialog open={isAddUserOpen || isEditUserOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsAddUserOpen(false);
+          setIsEditUserOpen(false);
+        }
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{isEditUserOpen ? 'Edit User' : 'Add New User'}</DialogTitle>
+            <DialogDescription>
+              {isEditUserOpen ? 'Update user information.' : 'Fill in the details to create a new user.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                placeholder="Enter name"
+                className="col-span-3"
+                value={formValues.name}
+                onChange={(e) => handleFormInput('name', e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email
+              </Label>
+              <Input
+                id="email"
+                placeholder="Enter email"
+                className="col-span-3"
+                value={formValues.email}
+                onChange={(e) => handleFormInput('email', e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="role" className="text-right">
+                Role
+              </Label>
+              <Select
+                value={formValues.role}
+                onValueChange={(value) => handleFormInput('role', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Editor">Editor</SelectItem>
+                  <SelectItem value="Viewer">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {!isEditUserOpen && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="password" className="text-right">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter password"
+                  className="col-span-3"
+                  value={formValues.password || ''}
+                  onChange={(e) => handleFormInput('password', e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                setIsAddUserOpen(false);
+                setIsEditUserOpen(false);
+              }}
+              disabled={isActionPending}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleUserSubmit} 
+              disabled={isActionPending}
+            >
+              {isActionPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isEditUserOpen ? 'Updating...' : 'Creating...'}
+                </>
+              ) : (
+                isEditUserOpen ? 'Update User' : 'Create User'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm User Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedUser?.name}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsDeleteUserOpen(false)}
+              disabled={isActionPending}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={confirmDeleteUser}
+              disabled={isActionPending}
+            >
+              {isActionPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete User'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Reset User Password</DialogTitle>
+            <DialogDescription>
+              Send a password reset email to {selectedUser?.email}?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsResetPasswordOpen(false)}
+              disabled={isActionPending}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={confirmResetPassword}
+              disabled={isActionPending}
+            >
+              {isActionPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Reset Email
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
