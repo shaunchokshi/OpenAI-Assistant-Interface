@@ -158,37 +158,89 @@ export function ThemeProvider({
     
     // Apply direct CSS style overrides using hex values
     if (customColors.backgroundColor) {
-      root.style.setProperty('--background-color', customColors.backgroundColor);
-      // For background we'll use the actual color directly to override Tailwind
+      console.log("Applying background color:", customColors.backgroundColor);
+      
+      // Set CSS variable for Tailwind
+      root.style.setProperty('--background', customColors.backgroundColor);
+      
+      // Apply directly to elements
       document.body.style.backgroundColor = customColors.backgroundColor;
+      
+      // Override Tailwind classes by selecting all elements with bg-background
+      document.querySelectorAll('.bg-background').forEach(elem => {
+        const backgroundColor = customColors.backgroundColor || '';
+        (elem as HTMLElement).style.backgroundColor = backgroundColor;
+      });
     } else {
-      root.style.removeProperty('--background-color');
+      root.style.removeProperty('--background');
       document.body.style.removeProperty('background-color');
+      
+      // Reset element styles
+      document.querySelectorAll('.bg-background').forEach(elem => {
+        (elem as HTMLElement).style.removeProperty('background-color');
+      });
     }
     
     if (customColors.foregroundColor) {
-      root.style.setProperty('--foreground-color', customColors.foregroundColor);
-      // For text color we'll use the actual color directly to override Tailwind
+      console.log("Applying foreground color:", customColors.foregroundColor);
+      
+      // Set CSS variable for Tailwind
+      root.style.setProperty('--foreground', customColors.foregroundColor);
+      
+      // Apply directly to elements - this applies to all text
       document.body.style.color = customColors.foregroundColor;
+      
+      // Target specific text elements to ensure consistent application
+      document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6').forEach(elem => {
+        // Don't override elements that have explicit color classes
+        let hasExplicitColor = false;
+        for (let i = 0; i < elem.classList.length; i++) {
+          const cls = elem.classList[i];
+          if (cls.startsWith('text-') && cls !== 'text-foreground') {
+            hasExplicitColor = true;
+            break;
+          }
+        }
+        
+        if (!hasExplicitColor) {
+          (elem as HTMLElement).style.color = customColors.foregroundColor || '';
+        }
+      });
     } else {
-      root.style.removeProperty('--foreground-color');
+      root.style.removeProperty('--foreground');
       document.body.style.removeProperty('color');
+      
+      // Reset text elements
+      document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6').forEach(elem => {
+        (elem as HTMLElement).style.removeProperty('color');
+      });
     }
     
-    // Apply accent/primary color
+    // Apply primary color to primary UI elements like buttons
+    const primaryColor = customColors.primaryColor || '';
+    if (primaryColor) {
+      console.log("Applying primary color:", primaryColor);
+      root.style.setProperty('--primary', primaryColor);
+      
+      // Update all primary buttons globally
+      document.querySelectorAll('.bg-primary').forEach(button => {
+        (button as HTMLElement).style.backgroundColor = primaryColor;
+      });
+    } else {
+      root.style.removeProperty('--primary');
+      document.querySelectorAll('.bg-primary').forEach(button => {
+        (button as HTMLElement).style.removeProperty('background-color');
+      });
+    }
+    
+    // Apply accent color (for highlights, active indicators, etc.)
     const accentColor = customColors.accentColor || '';
     if (accentColor) {
-      root.style.setProperty('--accent-color', accentColor);
+      console.log("Applying accent color:", accentColor);
+      root.style.setProperty('--accent', accentColor);
       
-      // Update primary button colors
-      const buttons = document.querySelectorAll('.bg-primary');
-      buttons.forEach(button => {
-        (button as HTMLElement).style.backgroundColor = accentColor;
-      });
-      
-      // Update selected items, borders, etc.
-      const primaryElems = document.querySelectorAll('.text-primary, .border-primary, .hover\\:text-primary');
-      primaryElems.forEach(elem => {
+      // Apply to accent-specific elements
+      document.querySelectorAll('.text-primary, .border-primary').forEach(elem => {
         if (elem.classList.contains('text-primary')) {
           (elem as HTMLElement).style.color = accentColor;
         }
@@ -196,17 +248,17 @@ export function ThemeProvider({
           (elem as HTMLElement).style.borderColor = accentColor;
         }
       });
-    } else {
-      root.style.removeProperty('--accent-color');
       
-      // Reset elements
-      const buttons = document.querySelectorAll('.bg-primary');
-      buttons.forEach(button => {
-        (button as HTMLElement).style.removeProperty('background-color');
+      // Apply accent color to active nav items
+      document.querySelectorAll('.active-nav-item').forEach(item => {
+        (item as HTMLElement).style.color = accentColor;
+        (item as HTMLElement).style.borderColor = accentColor;
       });
+    } else {
+      root.style.removeProperty('--accent');
       
-      const primaryElems = document.querySelectorAll('.text-primary, .border-primary, .hover\\:text-primary');
-      primaryElems.forEach(elem => {
+      // Reset accent elements
+      document.querySelectorAll('.text-primary, .border-primary').forEach(elem => {
         if (elem.classList.contains('text-primary')) {
           (elem as HTMLElement).style.removeProperty('color');
         }
@@ -214,38 +266,47 @@ export function ThemeProvider({
           (elem as HTMLElement).style.removeProperty('border-color');
         }
       });
-    }
-    
-    // Apply primary color (might be different from accent)
-    const primaryColor = customColors.primaryColor || '';
-    if (primaryColor) {
-      root.style.setProperty('--primary-color', primaryColor);
       
-      // Find an appropriate element to style with the primary color
-      const buttons = document.querySelectorAll('.bg-primary');
-      buttons.forEach(button => {
-        (button as HTMLElement).style.backgroundColor = primaryColor;
+      document.querySelectorAll('.active-nav-item').forEach(item => {
+        (item as HTMLElement).style.removeProperty('color');
+        (item as HTMLElement).style.removeProperty('border-color');
       });
-    } else {
-      root.style.removeProperty('--primary-color');
     }
     
     // Apply card color
     const cardColor = customColors.cardColor || '';
     if (cardColor) {
-      root.style.setProperty('--card-color', cardColor);
+      console.log("Applying card color:", cardColor);
+      root.style.setProperty('--card', cardColor);
       
-      // Apply to all card elements
-      const cards = document.querySelectorAll('.bg-card, .theme-preview-area .rounded-md');
-      cards.forEach(card => {
-        (card as HTMLElement).style.backgroundColor = cardColor;
+      // Apply to all card elements - more general selector to catch all card-like elements
+      document.querySelectorAll('.bg-card, [class*="card"], .rounded-md, .theme-preview-area .p-3').forEach(card => {
+        // Don't override elements that have other background colors intentionally
+        let hasOtherBgColor = false;
+        
+        // Skip processing if element doesn't have classList
+        if (!card.classList) {
+          (card as HTMLElement).style.backgroundColor = cardColor;
+          return;
+        }
+        
+        for (let i = 0; i < card.classList.length; i++) {
+          const cls = card.classList[i];
+          if (cls.startsWith('bg-') && !['bg-card', 'bg-background'].includes(cls)) {
+            hasOtherBgColor = true;
+            break;
+          }
+        }
+        
+        if (!hasOtherBgColor) {
+          (card as HTMLElement).style.backgroundColor = cardColor;
+        }
       });
     } else {
-      root.style.removeProperty('--card-color');
+      root.style.removeProperty('--card');
       
       // Reset cards
-      const cards = document.querySelectorAll('.bg-card, .theme-preview-area .rounded-md');
-      cards.forEach(card => {
+      document.querySelectorAll('.bg-card, [class*="card"], .rounded-md, .theme-preview-area .p-3').forEach(card => {
         (card as HTMLElement).style.removeProperty('background-color');
       });
     }
