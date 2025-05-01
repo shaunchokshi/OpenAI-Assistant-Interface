@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, MoreHorizontal, Users, Edit, Trash2, Key, CheckCircle, X, Mail } from "lucide-react";
+import { UserPlus, MoreHorizontal, Users, Edit, Trash2, Key, CheckCircle, X, Mail, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -260,41 +260,56 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm hidden md:table-cell">{user.lastActive}</TableCell>
                       <TableCell>
-                        <Popover open={popoverUser === user.id} onOpenChange={(open) => setPopoverUser(open ? user.id : null)}>
-                          <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-44 p-2" align="end">
-                            <div className="grid gap-1">
-                              <Button 
-                                variant="ghost" 
-                                className="flex items-center justify-start h-9 px-2 text-sm" 
-                                onClick={() => handleEditUser(user)}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                className="flex items-center justify-start h-9 px-2 text-sm" 
-                                onClick={() => handleResetPassword(user)}
-                              >
-                                <Key className="mr-2 h-4 w-4" />
-                                Reset Password
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                className="flex items-center justify-start h-9 px-2 text-sm text-red-500" 
-                                onClick={() => handleDeleteUser(user)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </Button>
+                        <div className="relative">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => setPopoverUser(popoverUser === user.id ? null : user.id)}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                          
+                          {popoverUser === user.id && (
+                            <div className="absolute right-0 top-full mt-1 z-50 bg-background rounded-md border shadow-md w-44 p-2">
+                              <div className="grid gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  className="flex items-center justify-start h-9 px-2 text-sm" 
+                                  onClick={() => {
+                                    handleEditUser(user);
+                                    setPopoverUser(null);
+                                  }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  className="flex items-center justify-start h-9 px-2 text-sm" 
+                                  onClick={() => {
+                                    handleResetPassword(user);
+                                    setPopoverUser(null);
+                                  }}
+                                >
+                                  <Key className="mr-2 h-4 w-4" />
+                                  Reset Password
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  className="flex items-center justify-start h-9 px-2 text-sm text-red-500" 
+                                  onClick={() => {
+                                    handleDeleteUser(user);
+                                    setPopoverUser(null);
+                                  }}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </Button>
+                              </div>
                             </div>
-                          </PopoverContent>
-                        </Popover>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -312,41 +327,56 @@ export default function UsersPage() {
                         <p className="font-medium">{user.name}</p>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                       </div>
-                      <Popover open={popoverUser === user.id} onOpenChange={(open) => setPopoverUser(open ? user.id : null)}>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-44 p-2" align="end">
-                          <div className="grid gap-1">
-                            <Button 
-                              variant="ghost" 
-                              className="flex items-center justify-start h-9 px-2 text-sm" 
-                              onClick={() => handleEditUser(user)}
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              className="flex items-center justify-start h-9 px-2 text-sm" 
-                              onClick={() => handleResetPassword(user)}
-                            >
-                              <Key className="mr-2 h-4 w-4" />
-                              Reset Password
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              className="flex items-center justify-start h-9 px-2 text-sm text-red-500" 
-                              onClick={() => handleDeleteUser(user)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </Button>
+                      <div className="relative">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => setPopoverUser(popoverUser === user.id ? null : user.id)}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        
+                        {popoverUser === user.id && (
+                          <div className="absolute right-0 top-full mt-1 z-50 bg-background rounded-md border shadow-md w-44 p-2">
+                            <div className="grid gap-1">
+                              <Button 
+                                variant="ghost" 
+                                className="flex items-center justify-start h-9 px-2 text-sm" 
+                                onClick={() => {
+                                  handleEditUser(user);
+                                  setPopoverUser(null);
+                                }}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                className="flex items-center justify-start h-9 px-2 text-sm" 
+                                onClick={() => {
+                                  handleResetPassword(user);
+                                  setPopoverUser(null);
+                                }}
+                              >
+                                <Key className="mr-2 h-4 w-4" />
+                                Reset Password
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                className="flex items-center justify-start h-9 px-2 text-sm text-red-500" 
+                                onClick={() => {
+                                  handleDeleteUser(user);
+                                  setPopoverUser(null);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </Button>
+                            </div>
                           </div>
-                        </PopoverContent>
-                      </Popover>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant={user.role === "Admin" ? "default" : user.role === "Editor" ? "outline" : "secondary"}>
