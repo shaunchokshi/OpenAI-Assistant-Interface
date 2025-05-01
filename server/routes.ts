@@ -862,6 +862,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fine-tuning API routes
+  // Get available models for fine-tuning
+  app.get("/api/fine-tuning/models", ensureAuthenticated, getFineTunableModels);
+  
+  // Create a new fine-tuning job
+  app.post("/api/fine-tuning/jobs", ensureAuthenticated, createFineTuningJob);
+  
+  // Get user's fine-tuning jobs
+  app.get("/api/fine-tuning/jobs", ensureAuthenticated, getUserFineTuningJobs);
+  
+  // Get details for a specific fine-tuning job
+  app.get("/api/fine-tuning/jobs/:id", ensureAuthenticated, getFineTuningJobDetails);
+  
+  // Cancel a fine-tuning job
+  app.post("/api/fine-tuning/jobs/:id/cancel", ensureAuthenticated, cancelFineTuningJob);
+  
+  // Get user's fine-tuned models
+  app.get("/api/fine-tuning/models/custom", ensureAuthenticated, getUserFineTunedModels);
+  
+  // Update fine-tuned model status (active/inactive)
+  app.patch("/api/fine-tuning/models/custom/:id", ensureAuthenticated, updateFineTunedModelStatus);
+  
+  // Delete (deactivate) a fine-tuned model
+  app.delete("/api/fine-tuning/models/custom/:id", ensureAuthenticated, deleteFineTunedModel);
+
   const httpServer = createServer(app);
   return httpServer;
 }

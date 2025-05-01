@@ -15,6 +15,7 @@ import FilesPage from "./pages/files-page";
 import AnalyticsPage from "./pages/analytics-page";
 import ChatPage from "./pages/chat-page";
 import UsersPage from "./pages/users-page";
+import FineTuningPage from "./pages/fine-tuning-page";
 import NotFound from "./pages/not-found";
 
 // Auth Components
