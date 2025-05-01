@@ -9,6 +9,16 @@ import { storage, hashApiKey } from "./storage";
 import { apiKeySchema, assistantSchema, updateAssistantSchema, userPreferencesSchema, updateUserPreferencesSchema } from "@shared/schema";
 import fs from "fs";
 import { logger } from "./logger";
+import { 
+  getFineTunableModels, 
+  createFineTuningJob, 
+  getUserFineTuningJobs, 
+  getFineTuningJobDetails,
+  cancelFineTuningJob,
+  getUserFineTunedModels,
+  updateFineTunedModelStatus,
+  deleteFineTunedModel
+} from "./fine-tuning";
 
 // Format uptime into human-readable string
 function formatUptime(uptime: number): string {
