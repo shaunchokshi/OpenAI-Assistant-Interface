@@ -111,6 +111,34 @@ export const usageAnalytics = pgTable("usage_analytics", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const fineTuningJobs = pgTable("fine_tuning_jobs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  openaiJobId: varchar("openai_job_id", { length: 100 }),
+  name: varchar("name", { length: 100 }).notNull(),
+  baseModel: varchar("base_model", { length: 50 }).notNull(),
+  trainingFileId: integer("training_file_id").references(() => files.id),
+  validationFileId: integer("validation_file_id").references(() => files.id),
+  fineTunedModelName: varchar("fine_tuned_model_name", { length: 100 }),
+  hyperparameters: json("hyperparameters"),
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, running, succeeded, failed, cancelled
+  trainedTokens: integer("trained_tokens"),
+  error: text("error"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const fineTunedModels = pgTable("fine_tuned_models", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  jobId: integer("job_id").references(() => fineTuningJobs.id, { onDelete: "set null" }),
+  openaiModelId: varchar("openai_model_id", { length: 100 }).notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  baseModel: varchar("base_model", { length: 50 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+});
+
 export const userPreferences = pgTable("user_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -180,6 +208,25 @@ export const userPreferencesSchema = createInsertSchema(userPreferences, {
 
 export const updateUserPreferencesSchema = userPreferencesSchema.partial().omit({ userId: true });
 
+// Create schemas for fine-tuning
+export const fineTuningJobSchema = createInsertSchema(fineTuningJobs, {
+  id: undefined,
+  openaiJobId: undefined,
+  status: undefined,
+  trainedTokens: undefined,
+  error: undefined,
+  createdAt: undefined,
+  updatedAt: undefined,
+  fineTunedModelName: undefined
+});
+
+export const updateFineTuningJobSchema = fineTuningJobSchema.partial();
+
+export const fineTunedModelSchema = createInsertSchema(fineTunedModels, {
+  id: undefined,
+  createdAt: undefined
+});
+
 // Types
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -191,6 +238,9 @@ export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 export type InsertUsageAnalytic = z.infer<typeof usageAnalyticsSchema>;
 export type InsertUserPreferences = z.infer<typeof userPreferencesSchema>;
 export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
+export type InsertFineTuningJob = z.infer<typeof fineTuningJobSchema>;
+export type UpdateFineTuningJob = z.infer<typeof updateFineTuningJobSchema>;
+export type InsertFineTunedModel = z.infer<typeof fineTunedModelSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Assistant = typeof assistants.$inferSelect;
@@ -202,3 +252,5 @@ export type Session = typeof sessions.$inferSelect;
 export type UserSession = typeof userSessions.$inferSelect;
 export type UsageAnalytic = typeof usageAnalytics.$inferSelect;
 export type UserPreferences = typeof userPreferences.$inferSelect;
+export type FineTuningJob = typeof fineTuningJobs.$inferSelect;
+export type FineTunedModel = typeof fineTunedModels.$inferSelect;
