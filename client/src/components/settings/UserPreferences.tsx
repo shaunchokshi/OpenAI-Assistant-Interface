@@ -580,12 +580,42 @@ export default function UserPreferences() {
                         variant="outline"
                         className="mt-2"
                         onClick={() => {
-                          // Apply custom colors preview using the provider
+                          // Apply ALL custom colors for the preview
                           setProviderCustomColors({
                             backgroundColor: customColors.background,
                             foregroundColor: customColors.foreground,
-                            accentColor: customColors.accent
+                            accentColor: customColors.accent,
+                            primaryColor: customColors.primary,
+                            cardColor: customColors.card
                           });
+                          
+                          // Force re-render with temporary element styling
+                          const previewArea = document.querySelector('.theme-preview-area');
+                          if (previewArea) {
+                            // Apply to card example
+                            const cardExample = previewArea.querySelector('.bg-card');
+                            if (cardExample && customColors.card) {
+                              (cardExample as HTMLElement).style.backgroundColor = customColors.card;
+                            }
+                            
+                            // Apply to primary button
+                            const primaryButton = previewArea.querySelector('.bg-primary');
+                            if (primaryButton && customColors.primary) {
+                              (primaryButton as HTMLElement).style.backgroundColor = customColors.primary;
+                            }
+                            
+                            // Apply to background
+                            if (customColors.background) {
+                              (previewArea as HTMLElement).style.backgroundColor = customColors.background;
+                            }
+                            
+                            // Apply to text
+                            if (customColors.foreground) {
+                              Array.from(previewArea.querySelectorAll('p, h4, button')).forEach(
+                                el => (el as HTMLElement).style.color = customColors.foreground
+                              );
+                            }
+                          }
                           
                           toast({
                             title: "Colors Applied",
@@ -599,7 +629,7 @@ export default function UserPreferences() {
                   </div>
                 )}
                 
-                <div className="mt-4 p-4 bg-muted rounded-md">
+                <div className="mt-4 p-4 bg-muted rounded-md theme-preview-area">
                   <div className="flex items-center">
                     <PaletteIcon className="h-5 w-5 mr-2 text-amber-500" />
                     <span className="text-sm font-medium">Theme Preview</span>
