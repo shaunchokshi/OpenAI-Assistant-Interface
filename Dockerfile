@@ -24,11 +24,8 @@ ENV NODE_ENV=production
 COPY --from=builder /app/package*.json ./
 RUN npm ci --only=production
 
-# Copy built application
+# Copy built application (both backend and frontend)
 COPY --from=builder /app/dist ./dist
-
-# Copy client static files
-COPY --from=builder /app/client/dist ./client/dist
 
 # Create directories for logs and uploads
 RUN mkdir -p logs uploads/threads
