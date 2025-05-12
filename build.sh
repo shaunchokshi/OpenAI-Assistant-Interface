@@ -3,8 +3,13 @@
 # Build the application for production
 echo "Building application for production..."
 
-# Build the frontend and backend
-npm run build
+# First build the frontend with vite
+echo "Building frontend assets..."
+npx vite build
+
+# Build the backend with esbuild
+echo "Building backend..."
+npx esbuild server/**/*.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
 # Check if build was successful
 if [ $? -eq 0 ]; then
