@@ -20,9 +20,9 @@ WORKDIR /app
 # Set NODE_ENV to production
 ENV NODE_ENV=production
 
-# Copy package files from builder and install production dependencies only
+# Copy package files from builder and install dependencies (including dev dependencies needed for Vite)
 COPY --from=builder /app/package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy built application (both backend and frontend)
 COPY --from=builder /app/dist ./dist
