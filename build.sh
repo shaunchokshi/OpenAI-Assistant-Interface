@@ -9,7 +9,8 @@ npx vite build
 
 # Build the backend with esbuild
 echo "Building backend..."
-npx esbuild server/**/*.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+# This ensures all Vite-related packages are marked as external, so they aren't bundled
+npx esbuild server/**/*.ts --platform=node --packages=external --external:vite --external:@vitejs/plugin-react --external:@replit/* --bundle --format=esm --outdir=dist
 
 # Check if build was successful
 if [ $? -eq 0 ]; then
