@@ -47,38 +47,60 @@ A modern, secure web application for interacting with OpenAI Assistants, providi
    npm start
    ```
 
-#### Using Docker
+#### Using Docker (Recommended)
 
 1. Configure environment variables in `.env` file
-2. Build and run with Docker Compose:
+2. Build for production and run with Docker Compose:
    ```
-   ./docker-build.sh
-   docker-compose up -d
+   # Build production optimized version
+   ./build-production.sh
+   
+   # Run production containers
+   docker-compose -f docker-compose.prod.yml up -d
    ```
 
 ## Docker Deployment Instructions
 
-### Building the Docker Image
+### Building the Production Docker Image
+
+Our production build approach creates a streamlined Docker image without development dependencies:
 
 ```bash
-# Use our helper script to build the app and Docker image
+# 1. Build production-optimized application
+./build-production.sh
+
+# 2. Build the Docker image
+docker build -f Dockerfile.prod -t openai-assistant-platform:prod .
+
+# 3. Run with the production docker-compose file
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Alternative: Development Docker Build
+
+For development or testing, you can use the standard Docker build:
+
+```bash
+# Use our helper script
 ./docker-build.sh
 
-# Or build manually
+# Or run manually
+./build.sh
 docker-compose build
+docker-compose up -d
 ```
 
 ### Running the Container
 
 ```bash
-# Start the containers
-docker-compose up -d
+# Start the production containers
+docker-compose -f docker-compose.prod.yml up -d
 
 # View logs
-docker-compose logs -f
+docker-compose -f docker-compose.prod.yml logs -f
 
 # Stop containers
-docker-compose down
+docker-compose -f docker-compose.prod.yml down
 ```
 
 ### Environment Variables
@@ -87,17 +109,14 @@ Make sure to set all the required environment variables before running the conta
 
 ## Troubleshooting Docker Build
 
-If you encounter the error `failed to calculate checksum of ref: "/app/client/dist": not found`, it means the build process didn't generate the expected directory structure. Try these steps:
+If you encounter the error `Cannot find package '@vitejs/plugin-react' imported from /app/dist/index.js`, it means you're using the development build in a production context. Use our production-optimized build instead:
 
-1. Use our custom build script first:
-   ```
-   ./build.sh
-   ```
-2. Check that the `dist/public` directory exists with the frontend assets
-3. Rebuild the Docker image:
-   ```
-   docker-compose build
-   ```
+```bash
+./build-production.sh
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+The production build creates a specialized server setup that doesn't require development dependencies.
 
 ## License
 
