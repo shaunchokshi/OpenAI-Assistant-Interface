@@ -12,14 +12,20 @@ COPY . .
 # Make sure we're not using @neondatabase/serverless
 RUN npm uninstall @neondatabase/serverless || true
 
-# Ensure dist directories exist
-RUN mkdir -p dist/public dist/server
+# Ensure all possible static file directories exist
+RUN mkdir -p dist/public dist/client dist/server server/public public
 
 # Build the client - this will output to dist/public as defined in vite.config.ts
 RUN npx vite build
 
 # List what was built to verify output
 RUN ls -la dist/public
+
+# Copy the Vite build output to all the possible directories our app might look for it
+RUN cp -r dist/public/* dist/client/ || true
+RUN cp -r dist/public/* public/ || true
+RUN cp -r dist/public/* server/public/ || true
+RUN cp dist/public/index.html dist/ || true
 
 # Build the server - make sure to build to the right directory
 RUN npx esbuild server/*.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server
@@ -44,13 +50,14 @@ RUN npm install @vitejs/plugin-react
 # Copy built application (both backend and frontend)
 COPY --from=builder /app/dist ./dist
 
-# Make sure we create all possible directories that might be needed
+# Make sure these directories exist in the production image
 RUN mkdir -p dist/public dist/client server/public public
 
 # Copy production server and utility files
 COPY --from=builder /app/production-server.js ./
 COPY --from=builder /app/build-for-production.sh ./
 COPY --from=builder /app/check-database.js ./
+COPY --from=builder /app/fallback.html ./
 
 # Ensure files are executable
 RUN chmod +x production-server.js check-database.js build-for-production.sh
