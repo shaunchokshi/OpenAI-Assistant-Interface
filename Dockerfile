@@ -59,8 +59,18 @@ COPY --from=builder /app/build-for-production.sh ./
 COPY --from=builder /app/check-database.js ./
 COPY --from=builder /app/fallback.html ./
 
+# Copy our new database initialization script
+COPY initialize-database.js ./
+
+# Copy the Drizzle configuration file
+COPY --from=builder /app/drizzle.config.ts ./
+COPY --from=builder /app/shared/schema.ts ./shared/
+
+# Ensure we have drizzle-kit for migrations
+RUN npm install -g drizzle-kit
+
 # Ensure files are executable
-RUN chmod +x production-server.js check-database.js build-for-production.sh
+RUN chmod +x production-server.js check-database.js build-for-production.sh initialize-database.js
 
 # Create directories for logs and uploads
 RUN mkdir -p logs uploads/threads

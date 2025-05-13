@@ -69,6 +69,21 @@ if (fs.existsSync(path.resolve("./dist/public"))) {
 app.use(express.static(distPath));
 
 async function startServer() {
+  // Check if we need to initialize the database
+  try {
+    logger.info("Running database initialization check...");
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
+    
+    // Run database initialization
+    await execAsync('node initialize-database.js');
+    logger.info("Database initialization completed");
+  } catch (err) {
+    logger.error(`Database initialization error: ${err.message}`);
+    // Continue despite errors to allow manual intervention
+  }
+
   // Register API routes
   const server = await registerRoutes(app);
 

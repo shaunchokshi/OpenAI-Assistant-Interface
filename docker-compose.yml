@@ -30,11 +30,18 @@ services:
       - GITHUB_SECRET=${GITHUB_SECRET}
       - GITHUB_CALLBACK=${GITHUB_CALLBACK}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     volumes:
       - app_logs:/app/logs
       - app_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   postgres:
     image: postgres:14-alpine
