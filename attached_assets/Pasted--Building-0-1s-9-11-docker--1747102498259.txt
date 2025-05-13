@@ -1,0 +1,88 @@
+[+] Building 0.1s (9/11)                                                                     docker:default
+ => [internal] load build definition from Dockerfile.prod                                              0.0s
+ => => transferring dockerfile: 707B                                                                   0.0s
+ => [internal] load metadata for docker.io/library/node:20-slim                                        0.1s
+ => [internal] load .dockerignore                                                                      0.0s
+ => => transferring context: 466B                                                                      0.0s
+ => [1/7] FROM docker.io/library/node:20-slim@sha256:83e53269616ca1b22cf7533e5db4e2f1a0c24a8e818b2169  0.0s
+ => [internal] load build context                                                                      0.0s
+ => => transferring context: 115B                                                                      0.0s
+ => CACHED [2/7] WORKDIR /app                                                                          0.0s
+ => CACHED [3/7] COPY production/package.json ./                                                       0.0s
+ => CACHED [4/7] RUN npm install --omit=dev                                                            0.0s
+ => ERROR [5/7] COPY dist ./dist                                                                       0.0s
+------
+ > [5/7] COPY dist ./dist:
+------
+Dockerfile.prod:13
+--------------------
+  11 |
+  12 |     # Copy built application
+  13 | >>> COPY dist ./dist
+  14 |     COPY production/server.js ./
+  15 |
+--------------------
+ERROR: failed to solve: failed to compute cache key: failed to calculate checksum of ref a64631c9-0aa8-46ef-b999-8b12df737670::140cetwesf3y49eutgh94qdy8: "/dist": not found
+26711  /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+github.com/moby/buildkit/cache/contenthash.(*cacheContext).checksum
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/cache/contenthash/checksum.go:875
+github.com/moby/buildkit/cache/contenthash.(*cacheContext).scanChecksum
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/cache/contenthash/checksum.go:859
+github.com/moby/buildkit/cache/contenthash.(*cacheContext).lazyChecksum
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/cache/contenthash/checksum.go:822
+github.com/moby/buildkit/cache/contenthash.(*cacheContext).Checksum
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/cache/contenthash/checksum.go:426
+github.com/moby/buildkit/cache/contenthash.(*cacheManager).Checksum
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/cache/contenthash/checksum.go:117
+github.com/moby/buildkit/cache/contenthash.Checksum
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/cache/contenthash/checksum.go:65
+github.com/moby/buildkit/solver/llbsolver/ops.(*fileOp).CacheMap.NewContentHashFunc.func3.1
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/llbsolver/ops/opsutils/contenthash.go:47
+golang.org/x/sync/errgroup.(*Group).Go.func1
+        /root/build-deb/engine/vendor/golang.org/x/sync/errgroup/errgroup.go:79
+runtime.goexit
+        /usr/local/go/src/runtime/asm_amd64.s:1700
+
+26711  /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+github.com/moby/buildkit/cache/contenthash.init
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/cache/contenthash/checksum.go:29
+runtime.doInit1
+        /usr/local/go/src/runtime/proc.go:7291
+runtime.doInit
+        /usr/local/go/src/runtime/proc.go:7258
+runtime.main
+        /usr/local/go/src/runtime/proc.go:254
+runtime.goexit
+        /usr/local/go/src/runtime/asm_amd64.s:1700
+
+1010451 v0.23.0 /usr/libexec/docker/cli-plugins/docker-buildx buildx build -D -f Dockerfile.prod -t openai-assistant-platform:prod .
+google.golang.org/grpc.(*ClientConn).Invoke
+        google.golang.org/grpc@v1.69.4/call.go:35
+github.com/moby/buildkit/api/services/control.(*controlClient).Solve
+        github.com/moby/buildkit@v0.21.0/api/services/control/control_grpc.pb.go:88
+github.com/moby/buildkit/client.(*Client).solve.func2
+        github.com/moby/buildkit@v0.21.0/client/solve.go:268
+golang.org/x/sync/errgroup.(*Group).Go.func1
+        golang.org/x/sync@v0.13.0/errgroup/errgroup.go:79
+runtime.goexit
+        runtime/asm_amd64.s:1700
+
+26711  /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+github.com/moby/buildkit/solver.(*edge).computeCacheKeyFromDep.func1
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/edge.go:900
+github.com/moby/buildkit/solver/internal/pipe.NewWithFunction[...].func2
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/internal/pipe/pipe.go:78
+runtime.goexit
+        /usr/local/go/src/runtime/asm_amd64.s:1700
+
+1010451 v0.23.0 /usr/libexec/docker/cli-plugins/docker-buildx buildx build -D -f Dockerfile.prod -t openai-assistant-platform:prod .
+github.com/moby/buildkit/client.(*Client).solve.func2
+        github.com/moby/buildkit@v0.21.0/client/solve.go:285
+golang.org/x/sync/errgroup.(*Group).Go.func1
+        golang.org/x/sync@v0.13.0/errgroup/errgroup.go:79
+
+26711  /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+github.com/moby/buildkit/solver/llbsolver/ops.(*fileOp).CacheMap.NewContentHashFunc.func3.1
+        /root/build-deb/engine/vendor/github.com/moby/buildkit/solver/llbsolver/ops/opsutils/contenthash.go:58
+golang.org/x/sync/errgroup.(*Group).Go.func1
+        /root/build-deb/engine/vendor/golang.org/x/sync/errgroup/errgroup.go:79

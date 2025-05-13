@@ -1,0 +1,43 @@
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Copy source files
+COPY . .
+
+# Install all dependencies
+RUN npm ci
+
+# Build the frontend and backend
+RUN NODE_ENV=production npm run build
+
+# Production image
+FROM node:20-slim
+
+WORKDIR /app
+
+# Set NODE_ENV to production
+ENV NODE_ENV=production
+
+# Only copy necessary files
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy built files from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Create directories for logs and uploads
+RUN mkdir -p logs uploads/threads
+
+# Expose the application port
+EXPOSE 5000
+
+# Set node to use maximum old space size
+ENV NODE_OPTIONS=--max-old-space-size=2048
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:5000/api/health || exit 1
+
+# Run the application
+CMD ["node", "dist/server-prod.js"]
