@@ -9,6 +9,9 @@ RUN npm ci
 # Copy all files
 COPY . .
 
+# Make sure we're not using @neondatabase/serverless
+RUN npm uninstall @neondatabase/serverless || true
+
 # Build the application
 RUN npm run build
 
@@ -23,6 +26,10 @@ ENV NODE_ENV=production
 # Copy package files from builder and install dependencies (including dev dependencies needed for Vite)
 COPY --from=builder /app/package*.json ./
 RUN npm ci
+
+# Make sure we have pg installed and don't have @neondatabase/serverless
+RUN npm uninstall @neondatabase/serverless || true
+RUN npm install pg
 
 # Copy built application (both backend and frontend)
 COPY --from=builder /app/dist ./dist
