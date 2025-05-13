@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    command: ["node", "--experimental-specifier-resolution=node", "production-server.js"]
     environment:
       - NODE_ENV=production
       # Set a clear database URL that uses the postgres service
