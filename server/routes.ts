@@ -120,21 +120,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "User not authenticated" });
       }
       
+      console.log("Fetching user config for user ID:", req.user.id);
+      
       // Get the user from the database
       const user = await storage.getUser(req.user.id);
       if (!user) {
+        console.error("User not found for ID:", req.user.id);
         return res.status(404).json({ error: "User not found" });
       }
       
       // Get the user's assistants
       const assistants = await storage.getUserAssistants(req.user.id);
       
+      // Log the user's API key status
+      console.log("User API key status:", {
+        userId: user.id,
+        email: user.email,
+        hasApiKey: !!user.openaiKeyHash,
+        apiKeyHashLength: user.openaiKeyHash?.length || 0
+      });
+      
       // Return only what's needed for configuration
-      return res.json({
+      const configResponse = {
         hasApiKey: !!user.openaiKeyHash,
         defaultAssistantId: user.defaultAssistantId,
         assistantsCount: assistants.length
-      });
+      };
+      
+      console.log("Returning user config:", configResponse);
+      
+      return res.json(configResponse);
     } catch (error) {
       console.error("Error fetching user config:", error);
       return res.status(500).json({ error: "Failed to fetch user configuration" });

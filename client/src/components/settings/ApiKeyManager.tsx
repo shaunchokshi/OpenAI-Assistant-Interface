@@ -31,17 +31,24 @@ export default function ApiKeyManager() {
   const [localHasApiKey, setLocalHasApiKey] = useState(false);
 
   // Query to get the user's configuration (includes hasApiKey)
-  const { data: userConfig, isLoading: isConfigLoading } = useQuery<UserConfig>({
+  const { data: userConfig, isLoading: isConfigLoading, error: configError } = useQuery<UserConfig>({
     queryKey: ["/api/user/config"],
     enabled: !!user,  // Only run if user is logged in
+    staleTime: 0,  // Don't use cached data
+    refetchOnMount: true,  // Always refetch when component mounts
+    refetchOnWindowFocus: true,  // Refetch when window gets focus
   });
   
   // Update local state when data changes
   React.useEffect(() => {
     if (userConfig) {
+      console.log("User config received:", userConfig);
       setLocalHasApiKey(userConfig.hasApiKey || false);
     }
-  }, [userConfig]);
+    if (configError) {
+      console.error("Error fetching user config:", configError);
+    }
+  }, [userConfig, configError]);
 
   // Mutation to update the user's API key
   const updateKeyMutation = useMutation({
