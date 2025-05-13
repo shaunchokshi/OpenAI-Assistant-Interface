@@ -55,13 +55,13 @@ export default function AnalyticsPage() {
             <CardContent>
               <ul className="space-y-2">
                 <li>
-                  <strong>Total Tokens:</strong> 15,832
+                  <strong>Total Tokens:</strong> 
                 </li>
                 <li>
-                  <strong>Past 7 Days:</strong> 4,269
+                  <strong>Past 7 Days:</strong> 
                 </li>
                 <li>
-                  <strong>Average Tokens per Request:</strong> 520
+                  <strong>Average Tokens per Request:</strong> 
                 </li>
               </ul>
             </CardContent>
@@ -74,16 +74,16 @@ export default function AnalyticsPage() {
             <CardContent>
               <ul className="space-y-2">
                 <li>
-                  <strong>gpt-4o:</strong> 48% (7,585 tokens)
+                  <strong>gpt-4o:</strong> 
                 </li>
                 <li>
-                  <strong>gpt-4:</strong> 22% (3,489 tokens)
+                  <strong>gpt-4:</strong> 
                 </li>
                 <li>
-                  <strong>gpt-3.5-turbo:</strong> 18% (2,889 tokens)
+                  <strong>gpt-3.5-turbo:</strong>
                 </li>
                 <li>
-                  <strong>gpt-4-turbo:</strong> 12% (1,869 tokens)
+                  <strong>gpt-4-turbo:</strong>
                 </li>
               </ul>
             </CardContent>
@@ -97,32 +97,6 @@ export default function AnalyticsPage() {
               <ul className="space-y-4">
                 <li className="border-b pb-2">
                   <div className="flex justify-between">
-                    <span className="font-medium">gpt-4o</span>
-                    <span className="text-sm text-gray-500">Today, 10:24 AM</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>530 tokens</span>
-                    <span>$0.0077</span>
-                  </div>
-                </li>
-                <li className="border-b pb-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">gpt-4o</span>
-                    <span className="text-sm text-gray-500">Today, 9:15 AM</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>650 tokens</span>
-                    <span>$0.0096</span>
-                  </div>
-                </li>
-                <li className="border-b pb-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">gpt-3.5-turbo</span>
-                    <span className="text-sm text-gray-500">Yesterday, 4:30 PM</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>760 tokens</span>
-                    <span>$0.0006</span>
                   </div>
                 </li>
               </ul>
@@ -135,22 +109,6 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
-                <li className="flex justify-between">
-                  <span>gpt-4o</span>
-                  <span>$0.0648</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>gpt-4</span>
-                  <span>$0.0539</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>gpt-3.5-turbo</span>
-                  <span>$0.0018</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>gpt-4-turbo</span>
-                  <span>$0.0341</span>
-                </li>
               </ul>
             </CardContent>
           </Card>
