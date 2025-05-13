@@ -1,17 +1,4 @@
-FROM node:20-slim AS builder
-
-WORKDIR /app
-
-# Copy source files
-COPY . .
-
-# Install all dependencies
-RUN npm ci
-
-# Note: We don't build here - the docker-build-prod.sh script handles the build process
-# before the Docker build starts
-
-# Production image
+# Production image - Single-stage build since we're building outside Docker
 FROM node:20-slim
 
 WORKDIR /app
@@ -19,12 +6,12 @@ WORKDIR /app
 # Set NODE_ENV to production
 ENV NODE_ENV=production
 
-# Only copy necessary files
+# Copy package files and install production dependencies
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy pre-built dist directory from local machine
+COPY dist/ ./dist/
 
 # Create directories for logs and uploads
 RUN mkdir -p logs uploads/threads
