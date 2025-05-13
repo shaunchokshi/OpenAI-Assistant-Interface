@@ -134,6 +134,11 @@ export default function ApiKeyManager() {
                   <div className="text-sm">
                     <span className="font-medium">API Key is set</span>
                     <p className="text-muted-foreground">Your OpenAI API key is securely stored.</p>
+                    {userConfig?.apiKeyAddedAt && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Added on: {new Date(userConfig.apiKeyAddedAt).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                 </>
               ) : (
