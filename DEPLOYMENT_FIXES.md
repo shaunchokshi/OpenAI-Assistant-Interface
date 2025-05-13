@@ -2,6 +2,14 @@
 
 This guide documents the fixes implemented to resolve authentication issues in the Docker deployment.
 
+## IMPORTANT: Changes Made in Latest Update (May 13, 2025)
+
+The most recent fixes address the syntax error in the Dockerfile:
+
+1. Created `production-server.js` directly in the repository instead of attempting to generate it in the Dockerfile
+2. Fixed build process to properly handle client and server files with correct directory structure
+3. Made sure all scripts are properly copied and have executable permissions
+
 ## Issues Fixed
 
 1. **Database Connection Issue:**
