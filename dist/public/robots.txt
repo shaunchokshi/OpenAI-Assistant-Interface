@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /uploads/
+Disallow: /settings/
+
+# Prevent crawling of API and authentication routes
+# Only public-facing content should be indexed
+
+Sitemap: https://yourdomain.com/sitemap.xml

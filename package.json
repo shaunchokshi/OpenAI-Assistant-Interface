@@ -50,6 +50,7 @@
     "@types/passport-github2": "^1.2.9",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/pg": "^8.15.1",
+    "@vitejs/plugin-react": "^4.3.2",
     "bcrypt": "^5.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
