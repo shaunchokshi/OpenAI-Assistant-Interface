@@ -1,0 +1,71 @@
+Building OpenAI Assistants Platform Production Image
+====================================================
+Step 1: Building frontend assets...
+npm warn Unknown builtin config "globalignorefile". This will stop working in the next major version of npm.
+vite v5.4.14 building for production...
+transforming (1) index.htmlBrowserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2052 modules transformed.
+../dist/public/index.html                   0.90 kB │ gzip:   0.49 kB
+../dist/public/assets/index-DqdwMbrG.css   69.39 kB │ gzip:  12.13 kB
+../dist/public/assets/index-B8JT5xk5.js   549.15 kB │ gzip: 163.86 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.73s
+Step 2: Preparing production server entry point...
+Step 3: Building backend...
+npm warn Unknown builtin config "globalignorefile". This will stop working in the next major version of npm.
+
+  dist/index.js        98.3kb
+  dist/server-prod.js  92.9kb
+  dist/routes.js       91.9kb
+  dist/auth.js         45.7kb
+  dist/openai.js       38.9kb
+  dist/fine-tuning.js  36.1kb
+  dist/analytics.js    27.2kb
+  dist/storage.js      25.1kb
+  dist/db.js           11.0kb
+  dist/email.js         3.0kb
+  dist/vite.js          2.9kb
+  dist/logger.js        2.1kb
+  dist/cache.js         1.1kb
+
+⚡ Done in 3ms
+npm warn Unknown builtin config "globalignorefile". This will stop working in the next major version of npm.
+
+  dist/server-prod.js  93.5kb
+
+⚡ Done in 3ms
+Step 4: Building Docker image...
+[+] Building 4.3s (11/12)                                                                    docker:default
+ => [internal] load build definition from Dockerfile.prod                                              0.0s
+ => => transferring dockerfile: 1.00kB                                                                 0.0s
+ => [internal] load metadata for docker.io/library/node:20-slim                                        0.1s
+ => [internal] load .dockerignore                                                                      0.0s
+ => => transferring context: 466B                                                                      0.0s
+ => [builder 1/4] FROM docker.io/library/node:20-slim@sha256:83e53269616ca1b22cf7533e5db4e2f1a0c24a8e  0.0s
+ => [internal] load build context                                                                      0.0s
+ => => transferring context: 3.80MB                                                                    0.0s
+ => CACHED [builder 2/4] WORKDIR /app                                                                  0.0s
+ => [builder 3/4] COPY . .                                                                             0.1s
+ => [builder 4/4] RUN npm ci                                                                           3.9s
+ => CACHED [stage-1 3/6] COPY package*.json ./                                                         0.0s
+ => CACHED [stage-1 4/6] RUN npm ci --only=production                                                  0.0s
+ => ERROR [stage-1 5/6] COPY --from=builder /app/dist ./dist                                           0.0s
+------
+ > [stage-1 5/6] COPY --from=builder /app/dist ./dist:
+------
+Dockerfile.prod:27
+--------------------
+  25 |
+  26 |     # Copy built files from builder stage
+  27 | >>> COPY --from=builder /app/dist ./dist
+  28 |
+  29 |     # Create directories for logs and uploads
+--------------------
+ERROR: failed to solve: failed to compute cache key: failed to calculate checksum of ref a64631c9-0aa8-46ef-b999-8b12df737670::rjsemwnodl0zpobgz0t1yhrvh: "/app/dist": not found
+❌ Docker build failed!
