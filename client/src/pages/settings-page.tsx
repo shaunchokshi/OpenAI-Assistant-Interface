@@ -5,6 +5,7 @@ import SessionsManager from "@/components/settings/SessionsManager";
 import ProfileInfo from "@/components/settings/ProfileInfo";
 import ApiKeyManager from "@/components/settings/ApiKeyManager";
 import UserPreferences from "@/components/settings/UserPreferences";
+import AssistantConfig from "@/components/settings/AssistantConfig";
 
 export default function SettingsPage() {
   return (
@@ -17,6 +18,7 @@ export default function SettingsPage() {
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+            <TabsTrigger value="assistants">Assistants</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
           </TabsList>
           
@@ -58,6 +60,20 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <ApiKeyManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="assistants">
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Assistants</CardTitle>
+                <CardDescription>
+                  Manage your AI assistants and their configurations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AssistantConfig />
               </CardContent>
             </Card>
           </TabsContent>
