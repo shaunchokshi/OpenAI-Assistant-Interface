@@ -12,8 +12,11 @@ COPY . .
 # Make sure we're not using @neondatabase/serverless
 RUN npm uninstall @neondatabase/serverless || true
 
-# Build the application
-RUN npm run build
+# Build the client
+RUN npx vite build
+
+# Build the server
+RUN npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
 # Create a more lightweight production image
 FROM node:20-slim

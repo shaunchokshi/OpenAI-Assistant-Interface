@@ -135,12 +135,24 @@ app.use((req, res, next) => {
       
       // Close database pool and other connections
       try {
-        // Optionally close the database pool if needed
-        // await db.end();
+        // Close the database pool - using dynamic import with then() instead of await
+        import('./db.js')
+          .then(({ pool }) => {
+            if (pool && typeof pool.end === 'function') {
+              return pool.end();
+            }
+          })
+          .then(() => {
+            logger.info('Database pool closed');
+          })
+          .catch(dbErr => {
+            logger.warn(`Could not close database pool: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
+          });
+        
         logger.info('Graceful shutdown completed');
         process.exit(0);
       } catch (err: any) {
-        logger.error(`Error closing database: ${err.message}`);
+        logger.error(`Error during shutdown: ${err.message}`);
         process.exit(1);
       }
     });
