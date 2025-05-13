@@ -66,13 +66,10 @@ A modern, secure web application for interacting with OpenAI Assistants, providi
 Our production build approach creates a streamlined Docker image without development dependencies:
 
 ```bash
-# 1. Build production-optimized application
-./build-production.sh
+# Single command to build everything for production
+./docker-build-prod.sh
 
-# 2. Build the Docker image
-docker build -f Dockerfile.prod -t openai-assistant-platform:prod .
-
-# 3. Run with the production docker-compose file
+# Then run with the production docker-compose file
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
@@ -109,14 +106,14 @@ Make sure to set all the required environment variables before running the conta
 
 ## Troubleshooting Docker Build
 
-If you encounter the error `Cannot find package '@vitejs/plugin-react' imported from /app/dist/index.js`, it means you're using the development build in a production context. Use our production-optimized build instead:
+If you encounter the error `Cannot find package '@vitejs/plugin-react' imported from /app/dist/index.js` or `failed to calculate checksum of ref: "/dist": not found`, it means you're using the development build in a production context or the build process didn't complete properly. Use our simplified production build script instead:
 
 ```bash
-./build-production.sh
+./docker-build-prod.sh
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-The production build creates a specialized server setup that doesn't require development dependencies.
+This script handles the complete production build process in a more reliable way, creating a specialized server setup that doesn't require development dependencies.
 
 ## License
 
