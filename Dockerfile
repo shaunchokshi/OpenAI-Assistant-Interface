@@ -13,10 +13,13 @@ COPY . .
 RUN npm uninstall @neondatabase/serverless || true
 
 # Ensure dist directories exist
-RUN mkdir -p dist/client dist/server
+RUN mkdir -p dist/public dist/server
 
-# Build the client
+# Build the client - this will output to dist/public as defined in vite.config.ts
 RUN npx vite build
+
+# List what was built to verify output
+RUN ls -la dist/public
 
 # Build the server - make sure to build to the right directory
 RUN npx esbuild server/*.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server
@@ -40,6 +43,9 @@ RUN npm install @vitejs/plugin-react
 
 # Copy built application (both backend and frontend)
 COPY --from=builder /app/dist ./dist
+
+# Make sure we create all possible directories that might be needed
+RUN mkdir -p dist/public dist/client server/public public
 
 # Copy production server and utility files
 COPY --from=builder /app/production-server.js ./
