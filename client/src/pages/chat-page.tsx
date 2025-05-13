@@ -90,20 +90,10 @@ export default function ChatPage() {
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <div className="space-y-4 min-w-[250px]">
-              {["General Assistant", "Code Helper", "Research Assistant"].map((name, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center gap-2 sm:gap-3 p-3 rounded-lg border hover:bg-accent/20 cursor-pointer transition-colors ${selectedAssistant === name ? 'bg-accent/20 border-primary' : ''}`}
-                  onClick={() => handleAssistantClick(name)}
-                >
-                  <div className="bg-primary/10 p-2 rounded-full shrink-0">
-                    <Bot className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium truncate">{name}</h3>
-                  </div>
-                </div>
-              ))}
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No assistants configured</p>
+                <p className="text-sm mt-2">Add an assistant in Settings</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -127,9 +117,7 @@ export default function ChatPage() {
                 <SelectValue placeholder="Select an assistant" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="General Assistant">General Assistant</SelectItem>
-                <SelectItem value="Code Helper">Code Helper</SelectItem>
-                <SelectItem value="Research Assistant">Research Assistant</SelectItem>
+                <SelectItem value="Default Assistant">Default Assistant</SelectItem>
               </SelectContent>
             </Select>
           </div>

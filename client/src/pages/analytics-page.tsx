@@ -36,13 +36,13 @@ export default function AnalyticsPage() {
             <CardContent>
               <ul className="space-y-2">
                 <li>
-                  <strong>Total Cost:</strong> $0.1546
+                  <strong>Total Cost:</strong> $0.00
                 </li>
                 <li>
-                  <strong>Past 7 Days:</strong> $0.0458
+                  <strong>Past 7 Days:</strong> $0.00
                 </li>
                 <li>
-                  <strong>Average Cost per Request:</strong> $0.0024
+                  <strong>Average Cost per Request:</strong> $0.00
                 </li>
               </ul>
             </CardContent>
