@@ -24,10 +24,20 @@ const LOG_DIR = "./logs";
 })();
 
 // Create a new OpenAI client for the user
-export function createOpenAIClient(apiKey: string): OpenAI {
-  return new OpenAI({
-    apiKey: apiKey,
-  });
+export function createOpenAIClient(apiKey: string): OpenAI | null {
+  if (!apiKey) {
+    logger.warn('Attempted to create OpenAI client without API key');
+    return null;
+  }
+  
+  try {
+    return new OpenAI({
+      apiKey: apiKey,
+    });
+  } catch (error) {
+    logger.error('Error creating OpenAI client:', error);
+    return null;
+  }
 }
 
 // Log messages to file
@@ -80,6 +90,10 @@ export async function initThread(req: Request, res: Response) {
     
     // Create OpenAI client with user's API key
     const openai = createOpenAIClient(apiKey);
+    
+    if (!openai) {
+      return res.status(500).json({ error: "Failed to initialize OpenAI client" });
+    }
     
     // Create a new thread with OpenAI
     const thread = await openai.beta.threads.create();
@@ -180,6 +194,10 @@ export async function chatWithAssistant(req: Request, res: Response) {
     
     // Create OpenAI client with user's API key
     const openai = createOpenAIClient(apiKey);
+    
+    if (!openai) {
+      return res.status(500).json({ error: "Failed to initialize OpenAI client" });
+    }
     
     // Log user message
     await logMessage("user", message);
@@ -372,6 +390,10 @@ export async function uploadFiles(req: Request, res: Response) {
     
     // Create OpenAI client with user's API key
     const openai = createOpenAIClient(apiKey);
+    
+    if (!openai) {
+      return res.status(500).json({ error: "Failed to initialize OpenAI client" });
+    }
     
     // Check if we need to create the OpenAI assistant
     if (!assistant.openaiAssistantId) {
