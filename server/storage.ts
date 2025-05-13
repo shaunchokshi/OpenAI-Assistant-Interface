@@ -182,12 +182,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUserWithOAuth(email: string, name?: string, picture?: string): Promise<User> {
+    // Truncate name and picture URL if they're too long
+    const truncatedName = name ? name.substring(0, 250) : name; // 255 is the column limit
+    
+    // Picture URL could be very long from Google/GitHub, truncate it
+    const truncatedPicture = picture ? picture.substring(0, 1020) : picture; // 1024 is the column limit
+    
     const [user] = await db
       .insert(users)
       .values({
         email,
-        name,
-        picture,
+        name: truncatedName,
+        picture: truncatedPicture,
         // No password for OAuth users
       })
       .returning();

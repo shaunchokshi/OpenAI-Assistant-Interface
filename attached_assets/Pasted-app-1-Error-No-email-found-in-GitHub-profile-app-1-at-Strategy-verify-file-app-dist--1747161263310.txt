@@ -1,0 +1,38 @@
+app-1  | Error: No email found in GitHub profile
+app-1  |     at Strategy._verify (file:///app/dist/server/routes.js:861:27)
+app-1  |     at /app/node_modules/passport-oauth2/lib/strategy.js:205:24
+app-1  |     at /app/node_modules/passport-github2/lib/strategy.js:123:14
+app-1  |     at passBackControl (/app/node_modules/oauth/lib/oauth2.js:134:9)
+app-1  |     at IncomingMessage.<anonymous> (/app/node_modules/oauth/lib/oauth2.js:157:7)
+app-1  |     at IncomingMessage.emit (node:events:536:35)
+app-1  |     at endReadableNT (node:internal/streams/readable:1698:12)
+app-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+
+
+errors from google oauth login:
+
+app-1  | error: value too long for type character varying(1024)
+app-1  |     at /app/node_modules/pg-pool/index.js:45:11
+app-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+app-1  |     at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+app-1  |     at async DatabaseStorage.createUserWithOAuth (file:///app/dist/server/routes.js:312:20)
+app-1  |     at async Strategy._verify (file:///app/dist/server/routes.js:939:22)
+
+postgres-1  | 2025-05-13 18:22:12.023 UTC [1] LOG:  database system is ready to accept connections
+postgres-1  | 2025-05-13 18:23:08.000 UTC [72] ERROR:  value too long for type character varying(1024)
+postgres-1  | 2025-05-13 18:23:08.000 UTC [72] STATEMENT:  insert into "users" ("id", "email", "password", "n
+ame", "picture", "role", "openai_key_hash", "default_assistant_id", "reset_at", "created_at", "updated_at") v
+alues (default, $1, default, $2, $3, default, default, default, default, default, default) returning "id", "e
+mail", "password", "name", "picture", "role", "openai_key_hash", "default_assistant_id", "reset_at", "created
+_at", "updated_at"
+postgres-1  | 2025-05-13 18:25:18.609 UTC [151] ERROR:  syntax error at or near "select" at character 26
+postgres-1  | 2025-05-13 18:25:18.609 UTC [151] STATEMENT:  select * from assistants select * from files;
+postgres-1  | 2025-05-13 18:25:56.882 UTC [151] ERROR:  syntax error at or near "select" at character 23
+postgres-1  | 2025-05-13 18:25:56.882 UTC [151] STATEMENT:  select * from session
+postgres-1  |   select * from oauth_profiles;
+postgres-1  | 2025-05-13 18:27:10.076 UTC [266] ERROR:  value too long for type character varying(1024)
+postgres-1  | 2025-05-13 18:27:10.076 UTC [266] STATEMENT:  insert into "users" ("id", "email", "password", "
+name", "picture", "role", "openai_key_hash", "default_assistant_id", "reset_at", "created_at", "updated_at")
+values (default, $1, default, $2, $3, default, default, default, default, default, default) returning "id", "
+email", "password", "name", "picture", "role", "openai_key_hash", "default_assistant_id", "reset_at", "create
+d_at", "updated_at"
