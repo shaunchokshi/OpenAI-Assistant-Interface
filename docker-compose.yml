@@ -7,14 +7,16 @@ services:
       - "5000:5000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL:-postgres://${PGUSER}:${PGPASSWORD}@postgres:5432/${PGDATABASE}}
+      # Set a clear database URL that uses the postgres service
+      - DATABASE_URL=postgres://${PGUSER}:${PGPASSWORD}@postgres:5432/${PGDATABASE}
       - SESSION_SECRET=${SESSION_SECRET}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - PGHOST=${PGHOST:-postgres}
+      # Make sure the standard PostgreSQL environment variables are set correctly
+      - PGHOST=postgres
       - PGUSER=${PGUSER}
       - PGPASSWORD=${PGPASSWORD}
       - PGDATABASE=${PGDATABASE}
-      - PGPORT=${PGPORT:-5432}
+      - PGPORT=5432
       - SMTP_FROM=${SMTP_FROM}
       - SMTP_RELAY_SERVER=${SMTP_RELAY_SERVER}
       - SMTP_RELAY_PORT=${SMTP_RELAY_PORT}
