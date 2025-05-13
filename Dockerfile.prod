@@ -8,8 +8,8 @@ COPY . .
 # Install all dependencies
 RUN npm ci
 
-# Build the frontend and backend
-RUN NODE_ENV=production npm run build
+# Note: We don't build here - the docker-build-prod.sh script handles the build process
+# before the Docker build starts
 
 # Production image
 FROM node:20-slim
@@ -39,5 +39,5 @@ ENV NODE_OPTIONS=--max-old-space-size=2048
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5000/api/health || exit 1
 
-# Run the application
+# Run the application (the entry point is already properly bundled by esbuild)
 CMD ["node", "dist/server-prod.js"]
