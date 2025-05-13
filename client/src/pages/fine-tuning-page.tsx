@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -132,53 +132,96 @@ const statusColorMap: Record<string, string> = {
 };
 
 const FineTuningPage = () => {
+  console.log("Rendering FineTuningPage component");
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("jobs");
   const [createJobOpen, setCreateJobOpen] = useState(false);
+  
+  // Add debugging to check for OpenAI API key
+  useEffect(() => {
+    console.log("Fine-tuning page mounted, checking API requirements");
+    
+    // Check if user is authenticated
+    if (user) {
+      console.log("User is authenticated in fine-tuning page");
+    } else {
+      console.log("User is not authenticated in fine-tuning page");
+    }
+  }, [user]);
 
   // Fetch available models
-  const { data: availableModels, isLoading: modelsLoading } = useQuery({
+  const { data: availableModels, isLoading: modelsLoading, error: modelsError } = useQuery({
     queryKey: ["/api/fine-tuning/models"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/fine-tuning/models");
-      return await res.json() as Record<string, ModelInfo>;
+      try {
+        const res = await apiRequest("GET", "/api/fine-tuning/models");
+        return await res.json() as Record<string, ModelInfo>;
+      } catch (error) {
+        console.error("Error fetching available models:", error);
+        // Return an empty object to prevent the component from breaking
+        return {} as Record<string, ModelInfo>;
+      }
     }
   });
 
   // Fetch user's fine-tuning jobs
-  const { data: jobs, isLoading: jobsLoading } = useQuery({
+  const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
     queryKey: ["/api/fine-tuning/jobs"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/fine-tuning/jobs");
-      return await res.json() as FineTuningJob[];
+      try {
+        const res = await apiRequest("GET", "/api/fine-tuning/jobs");
+        return await res.json() as FineTuningJob[];
+      } catch (error) {
+        console.error("Error fetching fine-tuning jobs:", error);
+        // Return an empty array to prevent the component from breaking
+        return [] as FineTuningJob[];
+      }
     }
   });
 
   // Fetch user's fine-tuned models
-  const { data: models, isLoading: modelsDataLoading } = useQuery({
+  const { data: models, isLoading: modelsDataLoading, error: customModelsError } = useQuery({
     queryKey: ["/api/fine-tuning/models/custom"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/fine-tuning/models/custom");
-      return await res.json() as FineTunedModel[];
+      try {
+        const res = await apiRequest("GET", "/api/fine-tuning/models/custom");
+        return await res.json() as FineTunedModel[];
+      } catch (error) {
+        console.error("Error fetching fine-tuned models:", error);
+        // Return an empty array to prevent the component from breaking
+        return [] as FineTunedModel[];
+      }
     }
   });
 
   // Fetch user's files
-  const { data: files, isLoading: filesLoading } = useQuery({
+  const { data: files, isLoading: filesLoading, error: filesError } = useQuery({
     queryKey: ["/api/files"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/files");
-      return await res.json() as FileData[];
+      try {
+        const res = await apiRequest("GET", "/api/files");
+        return await res.json() as FileData[];
+      } catch (error) {
+        console.error("Error fetching files:", error);
+        // Return an empty array to prevent the component from breaking
+        return [] as FileData[];
+      }
     }
   });
 
   // Create job mutation
   const createJobMutation = useMutation({
     mutationFn: async (jobData: z.infer<typeof createJobSchema>) => {
-      const res = await apiRequest("POST", "/api/fine-tuning/jobs", jobData);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/fine-tuning/jobs", jobData);
+        return await res.json();
+      } catch (error) {
+        console.error("Error creating fine-tuning job:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -191,6 +234,7 @@ const FineTuningPage = () => {
       queryClient.invalidateQueries({ queryKey: ["/api/fine-tuning/jobs"] });
     },
     onError: (error: any) => {
+      console.error("Mutation error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to create fine-tuning job",
@@ -285,10 +329,43 @@ const FineTuningPage = () => {
     createJobMutation.mutate(values);
   };
 
+  // Check for user authentication
   if (!user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p>Please log in to access fine-tuning features.</p>
+      </div>
+    );
+  }
+  
+  // Render error state if any critical query fails
+  if (modelsError || filesError) {
+    return (
+      <div className="container mx-auto p-4 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Fine-Tuning Management</h1>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>API Connection Issue</CardTitle>
+            <CardDescription>
+              We encountered a problem connecting to the OpenAI API.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center text-center p-6">
+              <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+              <h3 className="text-lg font-medium mb-2">OpenAI API Key Required</h3>
+              <p className="mb-4">
+                Fine-tuning features require a valid OpenAI API key. Please add your API key in the settings.
+              </p>
+              <Button onClick={() => window.location.href = "/settings"}>
+                Go to Settings
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
