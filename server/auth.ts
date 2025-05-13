@@ -99,9 +99,14 @@ export function setupAuth(app: Express) {
         },
         async (accessToken: string, refreshToken: string, profile: any, done: any) => {
           try {
-            const email = profile.emails?.[0]?.value;
+            let email = profile.emails?.[0]?.value;
+            
+            // GitHub might not provide email if user has privacy settings enabled
             if (!email) {
-              return done(new Error("No email found in GitHub profile"), false);
+              // Use a fallback email based on GitHub username
+              const username = profile.username || profile.displayName || `github-user-${profile.id}`;
+              email = `${username}@github-oauth-user.com`;
+              console.log(`No email found in GitHub profile for user ${username}, using fallback: ${email}`);
             }
 
             // Check if we have an OAuth profile already
@@ -171,9 +176,14 @@ export function setupAuth(app: Express) {
         },
         async (accessToken: string, refreshToken: string, profile: any, done: any) => {
           try {
-            const email = profile.emails?.[0]?.value;
+            let email = profile.emails?.[0]?.value;
+            
+            // Google might not provide email in rare cases
             if (!email) {
-              return done(new Error("No email found in Google profile"), false);
+              // Use a fallback email based on Google profile ID
+              const username = profile.displayName || `google-user-${profile.id}`;
+              email = `${username.replace(/\s+/g, '-').toLowerCase()}@google-oauth-user.com`;
+              console.log(`No email found in Google profile for user ${username}, using fallback: ${email}`);
             }
 
             // Check if we have an OAuth profile already

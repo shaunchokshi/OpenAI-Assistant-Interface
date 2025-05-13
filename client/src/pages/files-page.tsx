@@ -157,14 +157,8 @@ export default function FilesPage() {
     }
   };
 
-  // Sample files for demonstration
-  const sampleFiles = [
-    { id: 1, filename: "product_catalog.pdf", size: "2.3 MB", date: "2025-04-28", type: "pdf" },
-    { id: 2, filename: "quarterly_report.xlsx", size: "1.8 MB", date: "2025-04-25", type: "excel" },
-    { id: 3, filename: "presentation.pptx", size: "4.5 MB", date: "2025-04-20", type: "powerpoint" },
-    { id: 4, filename: "instructions.txt", size: "12 KB", date: "2025-04-18", type: "text" },
-    { id: 5, filename: "image.jpg", size: "3.2 MB", date: "2025-04-15", type: "image" },
-  ];
+  // Empty files array for when no API data is available
+  const emptyFiles: any[] = [];
 
   // Helper function to determine file type from filename
   function getFileTypeFromName(filename: string): string {
@@ -267,7 +261,7 @@ export default function FilesPage() {
                   <FileText className="h-8 w-8 text-primary" />
                   <div>
                     <p className="text-sm text-gray-500">Total Files</p>
-                    <p className="text-2xl font-bold">{sampleFiles.length}</p>
+                    <p className="text-2xl font-bold">{files?.length || 0}</p>
                   </div>
                 </div>
               </div>
@@ -276,7 +270,7 @@ export default function FilesPage() {
                   <FileText className="h-8 w-8 text-blue-600" />
                   <div>
                     <p className="text-sm text-gray-500">Storage Used</p>
-                    <p className="text-2xl font-bold">11.8 MB</p>
+                    <p className="text-2xl font-bold">0 MB</p>
                   </div>
                 </div>
               </div>
@@ -285,7 +279,7 @@ export default function FilesPage() {
                   <FileText className="h-8 w-8 text-green-600" />
                   <div>
                     <p className="text-sm text-gray-500">Files Used by AI</p>
-                    <p className="text-2xl font-bold">3</p>
+                    <p className="text-2xl font-bold">0</p>
                   </div>
                 </div>
               </div>
@@ -313,45 +307,54 @@ export default function FilesPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <div className="grid gap-4 min-w-[600px]">
-                  {(files?.length ? files : sampleFiles).map((file: any) => (
-                    <div
-                      key={file.id}
-                      className="flex flex-wrap sm:flex-nowrap items-center justify-between p-4 rounded-lg border hover:bg-accent/20"
-                    >
-                      <div className="flex items-center gap-3 w-full sm:w-auto mb-3 sm:mb-0">
-                        <div className="p-2 bg-primary/5 rounded shrink-0">
-                          {getFileIcon(file.type || getFileTypeFromName(file.filename))}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium truncate">{file.filename}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {typeof file.size === 'number' 
-                              ? `${(file.size / 1024 / 1024).toFixed(2)} MB` 
-                              : file.size} • Uploaded on {file.date || new Date(file.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 w-full sm:w-auto justify-end">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="shrink-0"
-                          onClick={() => handleDownload(file)}
+                <div className="min-w-[600px]">
+                  {files?.length ? (
+                    <div className="grid gap-4">
+                      {files.map((file: any) => (
+                        <div
+                          key={file.id}
+                          className="flex flex-wrap sm:flex-nowrap items-center justify-between p-4 rounded-lg border hover:bg-accent/20"
                         >
-                          <Download className="h-4 w-4 mr-2" /> Download
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="shrink-0"
-                          onClick={() => handleDeleteClick(file.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete
-                        </Button>
-                      </div>
+                          <div className="flex items-center gap-3 w-full sm:w-auto mb-3 sm:mb-0">
+                            <div className="p-2 bg-primary/5 rounded shrink-0">
+                              {getFileIcon(file.type || getFileTypeFromName(file.filename))}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-medium truncate">{file.filename}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {typeof file.size === 'number' 
+                                  ? `${(file.size / 1024 / 1024).toFixed(2)} MB` 
+                                  : file.size} • Uploaded on {file.date || new Date(file.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 w-full sm:w-auto justify-end">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="shrink-0"
+                              onClick={() => handleDownload(file)}
+                            >
+                              <Download className="h-4 w-4 mr-2" /> Download
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="shrink-0"
+                              onClick={() => handleDeleteClick(file.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="text-center py-10 text-muted-foreground">
+                      <p>No files uploaded yet</p>
+                      <p className="text-sm mt-2">Click "Upload Files" to add your first file</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

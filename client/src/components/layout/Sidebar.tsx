@@ -10,7 +10,7 @@ import {
   Users,
   LogOut,
   Menu,
-  X,
+  ChevronLeft,
   ChevronRight,
   Brain
 } from "lucide-react";
@@ -71,7 +71,7 @@ const Sidebar = ({ collapsed = false, onToggle, isMobile = false }: SidebarProps
         <div className="p-5 border-b border-gray-800 flex justify-between items-center">
           {!collapsed ? (
             <>
-              <div>
+              <div className="flex-1">
                 <h2 className="text-xl font-bold">OpenAI Assistant</h2>
                 <div className="text-sm mt-2 text-gray-400 truncate">
                   {user?.email}
@@ -80,9 +80,10 @@ const Sidebar = ({ collapsed = false, onToggle, isMobile = false }: SidebarProps
               {onToggle && (
                 <button 
                   onClick={onToggle} 
-                  className="p-1 rounded-md text-gray-400 hover:bg-gray-800 hover:text-white"
+                  className="ml-3 p-1.5 rounded-md text-sky-400 hover:bg-gray-800 hover:text-sky-300 transition-colors"
+                  title="Collapse sidebar"
                 >
-                  {collapsed ? <ChevronRight size={20} /> : <X size={20} />}
+                  <ChevronLeft size={20} />
                 </button>
               )}
             </>
@@ -91,9 +92,10 @@ const Sidebar = ({ collapsed = false, onToggle, isMobile = false }: SidebarProps
               {onToggle && (
                 <button 
                   onClick={onToggle} 
-                  className="p-1 rounded-md text-gray-400 hover:bg-gray-800 hover:text-white"
+                  className="p-1.5 rounded-md text-sky-400 hover:bg-gray-800 hover:text-sky-300 transition-colors"
+                  title="Expand sidebar"
                 >
-                  <Menu size={20} />
+                  <ChevronRight size={20} />
                 </button>
               )}
             </div>
