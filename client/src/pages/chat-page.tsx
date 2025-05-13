@@ -72,26 +72,10 @@ export default function ChatPage() {
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <div className="space-y-4 min-w-[300px]">
-              {[1, 2, 3].map((id, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg border hover:bg-accent/20 cursor-pointer transition-colors ${activeChatId === id ? 'bg-accent/20 border-primary' : ''}`}
-                  onClick={() => handleConversationClick(id)}
-                >
-                  <div className="bg-primary/10 p-2 sm:p-3 rounded-full shrink-0">
-                    <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium">Conversation {i + 1}</h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                      The last message from this conversation will appear here
-                    </p>
-                  </div>
-                  <div className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date().toLocaleDateString()}
-                  </div>
-                </div>
-              ))}
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No conversations yet</p>
+                <p className="text-sm mt-2">Start a new chat to begin</p>
+              </div>
             </div>
           </CardContent>
         </Card>
