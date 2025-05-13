@@ -5,10 +5,20 @@ import { trackApiUsage } from './analytics';
 import { InsertFineTuningJob, InsertFineTunedModel } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
-// Create a client using the app's admin API key
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Create a client using the app's admin API key if available
+// Only create the client if the API key is set, otherwise it will throw an error
+let openai: OpenAI | undefined;
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+  } else {
+    console.warn('OPENAI_API_KEY not set. Fine-tuning features will be disabled.');
+  }
+} catch (error) {
+  console.error('Error initializing OpenAI client:', error);
+}
 
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024
 // List of models that can be fine-tuned (at the time of implementation)
@@ -90,6 +100,14 @@ export async function createFineTuningJob(req: Request, res: Response) {
       }
     }
 
+    // Check if OpenAI client is available
+    if (!openai) {
+      return res.status(503).json({ 
+        error: 'Fine-tuning service unavailable',
+        details: 'OpenAI API key not configured'
+      });
+    }
+    
     // Create the job in OpenAI
     const openaiJob = await openai.fineTuning.jobs.create({
       training_file: trainingFile.openaiFileId,
@@ -179,7 +197,7 @@ export async function getFineTuningJobDetails(req: Request, res: Response) {
     }
 
     // If the job has an OpenAI ID, fetch the latest status
-    if (job.openaiJobId) {
+    if (job.openaiJobId && openai) {
       try {
         const openaiJob = await openai.fineTuning.jobs.retrieve(job.openaiJobId);
         
@@ -257,12 +275,16 @@ export async function cancelFineTuningJob(req: Request, res: Response) {
       return res.status(400).json({ error: 'Job has no OpenAI ID' });
     }
 
-    // Cancel the job in OpenAI
-    try {
-      await openai.fineTuning.jobs.cancel(job.openaiJobId);
-    } catch (openaiError) {
-      console.error('Error cancelling job in OpenAI:', openaiError);
-      // Continue with local cancellation even if OpenAI fails
+    // Cancel the job in OpenAI if client is available
+    if (openai) {
+      try {
+        await openai.fineTuning.jobs.cancel(job.openaiJobId);
+      } catch (openaiError) {
+        console.error('Error cancelling job in OpenAI:', openaiError);
+        // Continue with local cancellation even if OpenAI fails
+      }
+    } else {
+      console.warn('OpenAI client not available, skipping API cancellation');
     }
 
     // Update job status in our database
