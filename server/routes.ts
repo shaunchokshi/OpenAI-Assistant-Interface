@@ -137,12 +137,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
         email: user.email,
         hasApiKey: !!user.openaiKeyHash,
+        apiKeyAddedAt: user.openaiKeyAddedAt,
         apiKeyHashLength: user.openaiKeyHash?.length || 0
       });
       
       // Return only what's needed for configuration
       const configResponse = {
         hasApiKey: !!user.openaiKeyHash,
+        apiKeyAddedAt: user.openaiKeyAddedAt, // Include when the API key was added
         defaultAssistantId: user.defaultAssistantId,
         assistantsCount: assistants.length
       };

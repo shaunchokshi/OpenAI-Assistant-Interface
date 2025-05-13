@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   picture: varchar("picture", { length: 1024 }),
   role: varchar("role", { length: 50 }).default("user"), // Possible values: user, admin, editor
   openaiKeyHash: varchar("openai_key_hash", { length: 255 }),
+  openaiKeyAddedAt: timestamp("openai_key_added_at"), // When the API key was added
   defaultAssistantId: integer("default_assistant_id"),
   resetAt: timestamp("reset_at"),
   createdAt: timestamp("created_at").defaultNow(),

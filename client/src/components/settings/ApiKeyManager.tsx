@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 // Type for user configuration response
 type UserConfig = {
   hasApiKey: boolean;
+  apiKeyAddedAt: string | null;
   defaultAssistantId: number | null;
   assistantsCount: number;
 };

@@ -223,6 +223,7 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ 
         openaiKeyHash: apiKeyHash,
+        openaiKeyAddedAt: new Date(), // Set the timestamp when key was added
         updatedAt: new Date()
       })
       .where(eq(users.id, userId));
