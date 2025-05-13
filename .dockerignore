@@ -1,9 +1,6 @@
 # Node modules
 node_modules/
 
-# Build directories 
-dist/
-
 # Git
 .git/
 .gitignore
