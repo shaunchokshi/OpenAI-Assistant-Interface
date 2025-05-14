@@ -353,10 +353,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assistantData = assistantSchema.parse(req.body);
       
       // Create the assistant in the database
-      const assistant = await storage.createAssistant({
-        ...assistantData,
-        userId: req.user.id
-      });
+      // Use a type assertion to handle the userId field which is required internally but not in the schema
+      const createData = { ...assistantData } as any;
+      createData.userId = req.user.id;
+      const assistant = await storage.createAssistant(createData);
       
       return res.status(201).json(assistant);
     } catch (error: any) {
