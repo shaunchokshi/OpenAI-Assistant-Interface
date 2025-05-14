@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { Request, Response } from "express";
 import { storage } from "./storage";
-import { User, Assistant } from "@shared/schema";
+import { User, Assistant, InsertAssistant } from "@shared/schema";
 import { logger } from "./logger";
 import { validateUserApiKey } from "./openai";
 
@@ -52,7 +52,7 @@ export async function fetchOpenAIAssistants(req: Request, res: Response) {
         model: assistant.model,
         instructions: assistant.instructions || null,
         temperature: 0.7, // Default as OpenAI doesn't store this
-        userId: user.id,
+        // Fields like userId and file_ids will be handled by the createAssistant method
       }));
       
       return res.json(assistants);

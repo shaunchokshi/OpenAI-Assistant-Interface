@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import { setupAuth } from "./auth";
 import { cacheMiddleware } from "./cache";
 import { chatWithAssistant, initThread, uploadFiles, validateUserApiKey, createOpenAIClient } from "./openai";
+import { fetchOpenAIAssistants, importOpenAIAssistant, importMultipleAssistants } from "./assistant-import";
 import { storage, hashApiKey } from "./storage";
 import { apiKeySchema, assistantSchema, updateAssistantSchema, userPreferencesSchema, updateUserPreferencesSchema } from "@shared/schema";
 import fs from "fs";
