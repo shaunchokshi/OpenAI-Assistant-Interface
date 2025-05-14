@@ -34,8 +34,8 @@
 --card: 240 10% 3.9%;
 --card-foreground: 0 0% 98%;
 --border: 240 3.7% 15.9%;
---input: 0 0% 87%;
---input-foreground: 0 0% 0%;
+--input: 240 3.7% 15.9%;
+--input-foreground: 0 0% 98%;
 --primary: 207 90% 54%;
 --primary-foreground: 211 100% 99%;
 --secondary: 240 3.7% 15.9%;
@@ -55,6 +55,22 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+  
+  .dark input,
+  .dark textarea,
+  .dark select,
+  .dark .input,
+  .dark [data-theme="dark"] input {
+    @apply text-foreground bg-input;
+    color-scheme: dark;
+  }
+  
+  /* Additional styling for shadcn components */
+  .dark [role="combobox"],
+  .dark .select-trigger,
+  .dark .select-content {
+    @apply text-foreground bg-input;
   }
 }
 
