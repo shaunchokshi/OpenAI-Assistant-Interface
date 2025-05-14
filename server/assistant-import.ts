@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { Request, Response } from "express";
 import { storage } from "./storage";
-import { User, Assistant, InsertAssistant } from "@shared/schema";
+import { User, Assistant, InsertAssistant, assistantSchema } from "@shared/schema";
 import { logger } from "./logger";
 import { validateUserApiKey } from "./openai";
 
@@ -95,8 +95,8 @@ export async function importOpenAIAssistant(req: Request, res: Response) {
       // @ts-ignore - The OpenAI API does have file_ids but TypeScript may not recognize it
       const fileIds = openaiAssistant.file_ids || [];
       
-      // Create the assistant in our database
-      const assistant = await storage.createAssistant({
+      // Prepare assistant data using the schema to ensure it's valid
+      const assistantData = assistantSchema.parse({
         name: openaiAssistant.name || "Imported Assistant",
         description: openaiAssistant.description || null,
         openaiAssistantId: openaiAssistant.id,
@@ -104,6 +104,12 @@ export async function importOpenAIAssistant(req: Request, res: Response) {
         instructions: openaiAssistant.instructions || null,
         temperature: 0.7, // Default
         fileIds: fileIds
+      });
+      
+      // Create the assistant in our database
+      const assistant = await storage.createAssistant({
+        ...assistantData,
+        userId: req.user.id
       });
       
       return res.status(201).json(assistant);
@@ -152,15 +158,20 @@ export async function importMultipleAssistants(req: Request, res: Response) {
           // @ts-ignore - The OpenAI API does have file_ids but TypeScript may not recognize it
           const fileIds = openaiAssistant.file_ids || [];
           
-          // Create the assistant in our database
-          const assistant = await storage.createAssistant({
+          // Prepare assistant data using the schema to ensure it's valid
+          const assistantData = assistantSchema.parse({
             name: openaiAssistant.name || "Imported Assistant",
             description: openaiAssistant.description || null,
             openaiAssistantId: openaiAssistant.id,
             model: openaiAssistant.model,
             instructions: openaiAssistant.instructions || null,
             temperature: 0.7, // Default
-            fileIds: fileIds,
+            fileIds: fileIds
+          });
+          
+          // Create the assistant in our database
+          const assistant = await storage.createAssistant({
+            ...assistantData,
             userId: req.user.id
           });
           

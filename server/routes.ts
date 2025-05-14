@@ -438,6 +438,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Assistant Import from OpenAI API
+  app.post("/api/assistants/fetch-from-openai", ensureAuthenticated, fetchOpenAIAssistants);
+  
+  app.post("/api/assistants/import-from-openai", ensureAuthenticated, importOpenAIAssistant);
+  
+  app.post("/api/assistants/import-batch-from-openai", ensureAuthenticated, importMultipleAssistants);
+  
   // Thread management
   app.get("/api/threads", ensureAuthenticated, async (req: Request, res: Response) => {
     try {
