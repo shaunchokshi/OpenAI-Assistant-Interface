@@ -1,0 +1,56 @@
+interface-app.ckconsulting.ltd/:1 Refused to load the script 'https://replit.com/public/js/replit-dev-banner.js' because it violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' 'unsafe-eval'". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback.
+
+index-BOEtTYvj.js:308 Loaded custom colors from server: {}
+index-BOEtTYvj.js:366 Rendering FineTuningPage component
+index-BOEtTYvj.js:366 Fine-tuning page mounted, checking API requirements
+index-BOEtTYvj.js:366 User is authenticated in fine-tuning page
+index-BOEtTYvj.js:366 Rendering FineTuningPage component
+index-BOEtTYvj.js:366 Rendering FineTuningPage component
+index-BOEtTYvj.js:366 Rendering FineTuningPage component
+index-BOEtTYvj.js:366 Rendering FineTuningPage component
+index-BOEtTYvj.js:366 Rendering FineTuningPage component
+index-BOEtTYvj.js:366 Rendering FineTuningPage component
+index-BOEtTYvj.js:40 Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
+    at index-BOEtTYvj.js:363:46319
+    at dm (index-BOEtTYvj.js:38:16998)
+    at bg (index-BOEtTYvj.js:40:1571)
+    at v0 (index-BOEtTYvj.js:40:45934)
+    at p0 (index-BOEtTYvj.js:40:39727)
+    at Gk (index-BOEtTYvj.js:40:39655)
+    at Fc (index-BOEtTYvj.js:40:39508)
+    at Uf (index-BOEtTYvj.js:40:35875)
+    at Rg (index-BOEtTYvj.js:40:36678)
+    at Cs (index-BOEtTYvj.js:38:3274)
+Tf @ index-BOEtTYvj.js:40
+Yx.n.callback @ index-BOEtTYvj.js:40
+hg @ index-BOEtTYvj.js:38
+Pg @ index-BOEtTYvj.js:40
+d0 @ index-BOEtTYvj.js:40
+Qk @ index-BOEtTYvj.js:40
+Jk @ index-BOEtTYvj.js:40
+Ts @ index-BOEtTYvj.js:40
+Rg @ index-BOEtTYvj.js:40
+Cs @ index-BOEtTYvj.js:38
+(anonymous) @ index-BOEtTYvj.js:40
+index-BOEtTYvj.js:363 Uncaught Error: A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder.
+    at index-BOEtTYvj.js:363:46319
+    at dm (index-BOEtTYvj.js:38:16998)
+    at bg (index-BOEtTYvj.js:40:1571)
+    at v0 (index-BOEtTYvj.js:40:45934)
+    at p0 (index-BOEtTYvj.js:40:39727)
+    at Gk (index-BOEtTYvj.js:40:39655)
+    at Fc (index-BOEtTYvj.js:40:39508)
+    at Uf (index-BOEtTYvj.js:40:35875)
+    at Rg (index-BOEtTYvj.js:40:36678)
+    at Cs (index-BOEtTYvj.js:38:3274)
+(anonymous) @ index-BOEtTYvj.js:363
+dm @ index-BOEtTYvj.js:38
+bg @ index-BOEtTYvj.js:40
+v0 @ index-BOEtTYvj.js:40
+p0 @ index-BOEtTYvj.js:40
+Gk @ index-BOEtTYvj.js:40
+Fc @ index-BOEtTYvj.js:40
+Uf @ index-BOEtTYvj.js:40
+Rg @ index-BOEtTYvj.js:40
+Cs @ index-BOEtTYvj.js:38
+(anonymous) @ index-BOEtTYvj.js:40

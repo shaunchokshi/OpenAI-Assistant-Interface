@@ -1,0 +1,84 @@
+oai-app  | Fetching user config for user ID: 1
+oai-app  | User API key status: {
+oai-app  |   userId: 1,
+oai-app  |   email: 'admin@ckconsulting.ltd',
+oai-app  |   hasApiKey: true,
+oai-app  |   apiKeyAddedAt: 2025-05-14T03:50:10.419Z,
+oai-app  |   apiKeyHashLength: 64
+oai-app  | }
+oai-app  | Returning user config: {
+oai-app  |   hasApiKey: true,
+oai-app  |   apiKeyAddedAt: 2025-05-14T03:50:10.419Z,
+oai-app  |   defaultAssistantId: null,
+oai-app  |   assistantsCount: 0
+oai-app  | }
+oai-app  | Fetching user config for user ID: 1
+oai-app  | User API key status: {
+oai-app  |   userId: 1,
+oai-app  |   email: 'admin@ckconsulting.ltd',
+oai-app  |   hasApiKey: true,
+oai-app  |   apiKeyAddedAt: 2025-05-14T03:50:10.419Z,
+oai-app  |   apiKeyHashLength: 64
+oai-app  | }
+oai-app  | Returning user config: {
+oai-app  |   hasApiKey: true,
+oai-app  |   apiKeyAddedAt: 2025-05-14T03:50:10.419Z,
+oai-app  |   defaultAssistantId: null,
+oai-app  |   assistantsCount: 0
+oai-app  | }
+oai-app  | Fetching user config for user ID: 1
+oai-app  | User API key status: {
+oai-app  |   userId: 1,
+oai-app  |   email: 'admin@ckconsulting.ltd',
+oai-app  |   hasApiKey: true,
+oai-app  |   apiKeyAddedAt: 2025-05-14T03:50:10.419Z,
+oai-app  |   apiKeyHashLength: 64
+oai-app  | }
+oai-app  | Returning user config: {
+oai-app  |   hasApiKey: true,
+oai-app  |   apiKeyAddedAt: 2025-05-14T03:50:10.419Z,
+oai-app  |   defaultAssistantId: null,
+oai-app  |   assistantsCount: 0
+oai-app  | }
+oai-app  | Error creating assistant: ZodError: [
+oai-app  |   {
+oai-app  |     "code": "invalid_type",
+oai-app  |     "expected": "number",
+oai-app  |     "received": "undefined",
+oai-app  |     "path": [
+oai-app  |       "userId"
+oai-app  |     ],
+oai-app  |     "message": "Required"
+oai-app  |   }
+oai-app  | ]
+oai-app  |     at get error [as error] (file:///app/node_modules/zod/lib/index.mjs:587:31)
+oai-app  |     at ZodObject.parse (file:///app/node_modules/zod/lib/index.mjs:663:22)
+oai-app  |     at file:///app/dist/server/routes.js:2319:45
+oai-app  |     at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+oai-app  |     at next (/app/node_modules/express/lib/router/route.js:149:13)
+oai-app  |     at ensureAuthenticated2 (file:///app/dist/server/routes.js:2083:12)
+oai-app  |     at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+oai-app  |     at next (/app/node_modules/express/lib/router/route.js:149:13)
+oai-app  |     at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+oai-app  |     at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5) {
+oai-app  |   issues: [
+oai-app  |     {
+oai-app  |       code: 'invalid_type',
+oai-app  |       expected: 'number',
+oai-app  |       received: 'undefined',
+oai-app  |       path: [Array],
+oai-app  |       message: 'Required'
+oai-app  |     }
+oai-app  |   ],
+oai-app  |   addIssue: [Function (anonymous)],
+oai-app  |   addIssues: [Function (anonymous)],
+oai-app  |   errors: [
+oai-app  |     {
+oai-app  |       code: 'invalid_type',
+oai-app  |       expected: 'number',
+oai-app  |       received: 'undefined',
+oai-app  |       path: [Array],
+oai-app  |       message: 'Required'
+oai-app  |     }
+oai-app  |   ]
+oai-app  | }

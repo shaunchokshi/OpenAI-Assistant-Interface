@@ -663,7 +663,7 @@ const FineTuningPage = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {filesLoading ? (
                           <div className="flex justify-center p-2">
                             <Loader2 className="h-4 w-4 animate-spin" />

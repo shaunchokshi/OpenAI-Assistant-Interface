@@ -186,6 +186,7 @@ export const resetPasswordSchema = z.object({
 
 export const assistantSchema = createInsertSchema(assistants, {
   id: undefined,
+  userId: undefined, // This will be set by the server
   createdAt: undefined,
   updatedAt: undefined
 });
