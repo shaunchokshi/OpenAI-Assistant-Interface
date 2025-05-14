@@ -91,9 +91,18 @@ export async function importOpenAIAssistant(req: Request, res: Response) {
       // Fetch the specific assistant from OpenAI
       const openaiAssistant = await openai.beta.assistants.retrieve(assistantId);
       
+      // Log the entire assistant object to see its structure
+      logger.info(`Single assistant object structure: ${JSON.stringify(openaiAssistant)}`);
+      
       // Extract file_ids from the OpenAI assistant (if exists)
       // @ts-ignore - The OpenAI API does have file_ids but TypeScript may not recognize it
       const fileIds = openaiAssistant.file_ids || [];
+      
+      // Log the file IDs we found
+      logger.info(`File IDs for single assistant ${assistantId}: ${JSON.stringify(fileIds)}`);
+      
+      // Ensure fileIds is properly formatted as a string array
+      const processedFileIds = Array.isArray(fileIds) ? fileIds : [];
       
       // Prepare assistant data using the schema to ensure it's valid
       const assistantData = assistantSchema.parse({
@@ -103,16 +112,29 @@ export async function importOpenAIAssistant(req: Request, res: Response) {
         model: openaiAssistant.model,
         instructions: openaiAssistant.instructions || null,
         temperature: 0.7, // Default
-        fileIds: fileIds
+        fileIds: processedFileIds
       });
       
       // Create the assistant in our database
       // Workaround for TypeScript not recognizing userId (it's not in the schema but used internally)
       const createData = { ...assistantData } as any;
       createData.userId = req.user.id;
-      const assistant = await storage.createAssistant(createData);
       
-      return res.status(201).json(assistant);
+      try {
+        // Try to insert into the database
+        logger.info(`Creating single assistant in database with userId: ${req.user.id}`);
+        const assistant = await storage.createAssistant(createData);
+        
+        logger.info(`Successfully imported single assistant ${assistantId}`);
+        return res.status(201).json(assistant);
+      } catch (dbError: any) {
+        // Log database insertion errors
+        logger.error(`Database error inserting single assistant ${assistantId}: ${dbError.message}`, dbError);
+        return res.status(500).json({ 
+          error: "Failed to import assistant to database",
+          details: dbError.message
+        });
+      }
     } catch (error: any) {
       logger.error("Error importing OpenAI assistant:", error);
       return res.status(500).json({ 
@@ -157,18 +179,20 @@ export async function importMultipleAssistants(req: Request, res: Response) {
           // Log the entire assistant object to see its structure
           logger.info(`Assistant object structure: ${JSON.stringify(openaiAssistant)}`);
           
-          // Extract file_ids from the OpenAI assistant (if exists)
-          // The property might be file_ids, fileIds, or something else
-          const fileIds = 
-            // @ts-ignore - Try different possible property names
-            openaiAssistant.file_ids || 
-            openaiAssistant.fileIds || 
-            openaiAssistant.file_id_array || 
-            [];
+          // According to OpenAI API docs, the property should be "file_ids"
+          // TypeScript doesn't recognize it because it's not in the type definition
+          // @ts-ignore
+          const fileIds = openaiAssistant.file_ids || [];
+          
+          // Log the file IDs we found
+          logger.info(`File IDs for assistant ${assistantId}: ${JSON.stringify(fileIds)}`);
           
           logger.info(`Importing assistant ${assistantId}: ${openaiAssistant.name || "Unnamed"}`);
           
           try {
+            // Ensure fileIds is properly formatted as a string array
+            const processedFileIds = Array.isArray(fileIds) ? fileIds : [];
+            
             // Prepare assistant data using the schema to ensure it's valid
             const assistantData = assistantSchema.parse({
               name: openaiAssistant.name || "Imported Assistant",
@@ -177,7 +201,7 @@ export async function importMultipleAssistants(req: Request, res: Response) {
               model: openaiAssistant.model,
               instructions: openaiAssistant.instructions || null,
               temperature: 0.7, // Default
-              fileIds: fileIds
+              fileIds: processedFileIds
             });
             
             logger.info(`Parsed assistant data for ${assistantId}`, assistantData);
@@ -188,10 +212,21 @@ export async function importMultipleAssistants(req: Request, res: Response) {
             createData.userId = req.user.id;
             
             logger.info(`Creating assistant in database with userId: ${req.user.id}`);
-            const assistant = await storage.createAssistant(createData);
             
-            importedAssistants.push(assistant);
-            logger.info(`Successfully imported assistant ${assistantId}`);
+            try {
+              // Try to insert into the database
+              const assistant = await storage.createAssistant(createData);
+              
+              importedAssistants.push(assistant);
+              logger.info(`Successfully imported assistant ${assistantId}`);
+            } catch (dbError: any) {
+              // Log database insertion errors
+              logger.error(`Database error inserting assistant ${assistantId}: ${dbError.message}`, dbError);
+              errors.push({
+                assistantId,
+                error: `Database error: ${dbError.message}`
+              });
+            }
           } catch (parseErr: any) {
             logger.error(`Error parsing assistant data: ${parseErr.message}`, parseErr);
             errors.push({
