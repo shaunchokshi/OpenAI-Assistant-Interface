@@ -107,10 +107,10 @@ export async function importOpenAIAssistant(req: Request, res: Response) {
       });
       
       // Create the assistant in our database
-      const assistant = await storage.createAssistant({
-        ...assistantData,
-        userId: req.user.id
-      });
+      // Workaround for TypeScript not recognizing userId (it's not in the schema but used internally)
+      const createData = { ...assistantData } as any;
+      createData.userId = req.user.id;
+      const assistant = await storage.createAssistant(createData);
       
       return res.status(201).json(assistant);
     } catch (error: any) {
@@ -170,10 +170,10 @@ export async function importMultipleAssistants(req: Request, res: Response) {
           });
           
           // Create the assistant in our database
-          const assistant = await storage.createAssistant({
-            ...assistantData,
-            userId: req.user.id
-          });
+          // Workaround for TypeScript not recognizing userId (it's not in the schema but used internally)
+          const createData = { ...assistantData } as any;
+          createData.userId = req.user.id;
+          const assistant = await storage.createAssistant(createData);
           
           importedAssistants.push(assistant);
         } catch (err: any) {
