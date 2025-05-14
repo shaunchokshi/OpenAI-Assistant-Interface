@@ -19,9 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiKeySchema } from "@/lib/validation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Import } from "lucide-react";
 import { AssistantsList } from "./AssistantsList";
 import { CreateAssistantForm } from "./CreateAssistantForm";
+import { ImportAssistantsForm } from "./ImportAssistantsForm";
 
 export default function AssistantConfig() {
   const { toast } = useToast();
@@ -93,10 +94,14 @@ export default function AssistantConfig() {
         onValueChange={setActiveTab}
         className="mt-8 max-w-4xl"
       >
-        <TabsList className="grid grid-cols-3 mb-6">
+        <TabsList className="grid grid-cols-4 mb-6">
           <TabsTrigger value="api-key">API Key</TabsTrigger>
           <TabsTrigger value="assistants">Your Assistants</TabsTrigger>
           <TabsTrigger value="create-assistant">Create Assistant</TabsTrigger>
+          <TabsTrigger value="import-assistants">
+            <Import className="h-4 w-4 mr-2" />
+            Import
+          </TabsTrigger>
         </TabsList>
 
         {/* API Key Tab */}
@@ -184,6 +189,17 @@ export default function AssistantConfig() {
               // Refresh the assistants list
               queryClient.invalidateQueries({ queryKey: ["/api/assistants"] });
             }} 
+          />
+        </TabsContent>
+        
+        {/* Import Assistants Tab */}
+        <TabsContent value="import-assistants">
+          <ImportAssistantsForm 
+            onSuccess={() => {
+              setActiveTab("assistants");
+              // Refresh the assistants list
+              queryClient.invalidateQueries({ queryKey: ["/api/assistants"] });
+            }}
           />
         </TabsContent>
       </Tabs>
