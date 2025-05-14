@@ -1,17 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Plus, Send, Bot, X } from "lucide-react";
+import { MessageSquare, Plus, Send, Bot, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/hooks/use-auth";
+
+// Define assistant type
+interface Assistant {
+  id: number;
+  name: string;
+  description: string | null;
+  model: string;
+  temperature: number;
+  isDefault: boolean;
+}
 
 export default function ChatPage() {
+  const { user } = useAuth();
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [activeChatId, setActiveChatId] = useState<number | null>(null);
   const [selectedAssistant, setSelectedAssistant] = useState<string | null>(null);
+  const [selectedAssistantId, setSelectedAssistantId] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [assistants, setAssistants] = useState<Assistant[]>([]);
+  const [isLoadingAssistants, setIsLoadingAssistants] = useState(false);
   const { toast } = useToast();
 
   // Function to handle starting a new chat
@@ -27,7 +42,7 @@ export default function ChatPage() {
     });
     setIsNewChatOpen(false);
     setActiveChatId(Date.now()); // Using timestamp as temp ID
-    setSelectedAssistant(null);
+    // Don't reset the selected assistant here to keep it for the new chat
   };
 
   // Function to handle clicking on a conversation
@@ -40,14 +55,44 @@ export default function ChatPage() {
   };
 
   // Function to handle assistant selection
-  const handleAssistantClick = (name: string) => {
-    setSelectedAssistant(name);
+  const handleAssistantClick = (assistant: Assistant) => {
+    setSelectedAssistant(assistant.name);
+    setSelectedAssistantId(assistant.id);
     toast({
       title: "Assistant Selected",
-      description: `Selected ${name}`,
+      description: `Selected ${assistant.name}`,
     });
     setIsNewChatOpen(true);
   };
+  
+  // Function to fetch assistants from the API
+  const fetchAssistants = async () => {
+    if (!user) return;
+    
+    setIsLoadingAssistants(true);
+    try {
+      const response = await fetch('/api/assistants', {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fetched assistants:', data);
+        setAssistants(data);
+      } else {
+        console.error('Failed to fetch assistants:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching assistants:', error);
+    } finally {
+      setIsLoadingAssistants(false);
+    }
+  };
+  
+  // Fetch assistants when the component mounts
+  useEffect(() => {
+    fetchAssistants();
+  }, [user]);
 
   return (
     <div className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
@@ -90,10 +135,44 @@ export default function ChatPage() {
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <div className="space-y-4 min-w-[250px]">
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No assistants configured</p>
-                <p className="text-sm mt-2">Add an assistant in Settings</p>
-              </div>
+              {isLoadingAssistants ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : assistants.length > 0 ? (
+                <div className="grid gap-2">
+                  {assistants.map((assistant) => (
+                    <Button
+                      key={assistant.id}
+                      variant="outline"
+                      className="w-full justify-start text-left h-auto py-3"
+                      onClick={() => handleAssistantClick(assistant)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Bot className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-medium mb-1 flex items-center">
+                            {assistant.name}
+                            {assistant.isDefault && (
+                              <span className="ml-2 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-sm">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground line-clamp-2">
+                            Model: {assistant.model}
+                          </div>
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No assistants configured</p>
+                  <p className="text-sm mt-2">Add an assistant in Settings</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -110,14 +189,34 @@ export default function ChatPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Select 
-              value={selectedAssistant || ""} 
-              onValueChange={setSelectedAssistant}
+              value={selectedAssistantId?.toString() || ""} 
+              onValueChange={(value) => {
+                const assistant = assistants.find(a => a.id.toString() === value);
+                if (assistant) {
+                  setSelectedAssistant(assistant.name);
+                  setSelectedAssistantId(assistant.id);
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select an assistant" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Default Assistant">Default Assistant</SelectItem>
+                {isLoadingAssistants ? (
+                  <div className="flex justify-center p-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : assistants.length > 0 ? (
+                  assistants.map((assistant) => (
+                    <SelectItem key={assistant.id} value={assistant.id.toString()}>
+                      {assistant.name} {assistant.isDefault ? "(Default)" : ""}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-assistants" disabled>
+                    No assistants available
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
