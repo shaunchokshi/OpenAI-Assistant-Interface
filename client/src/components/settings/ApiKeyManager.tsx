@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
+import React, { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -28,28 +28,38 @@ export default function ApiKeyManager() {
   const { toast } = useToast();
   const [apiKey, setApiKey] = useState("");
   const [isHidden, setIsHidden] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userConfig, setUserConfig] = useState<UserConfig | null>(null);
   const [localHasApiKey, setLocalHasApiKey] = useState(false);
 
-  // Query to get the user's configuration (includes hasApiKey)
-  const { data: userConfig, isLoading: isConfigLoading, error: configError } = useQuery<UserConfig>({
-    queryKey: ["/api/user/config"],
-    enabled: !!user,  // Only run if user is logged in
-    staleTime: 0,  // Don't use cached data
-    refetchOnMount: true,  // Always refetch when component mounts
-    refetchOnWindowFocus: true,  // Refetch when window gets focus
-    queryFn: getQueryFn(),
-  });
-  
-  // Update local state when data changes
-  React.useEffect(() => {
-    if (userConfig) {
-      console.log("User config received:", userConfig);
-      setLocalHasApiKey(userConfig.hasApiKey || false);
+  // Fetch user configuration
+  useEffect(() => {
+    async function fetchUserConfig() {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/user/config", {
+          credentials: "include"
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("User config received:", data);
+          setUserConfig(data);
+          setLocalHasApiKey(data.hasApiKey || false);
+        } else {
+          console.error("Failed to fetch user config:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error fetching user config:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
-    if (configError) {
-      console.error("Error fetching user config:", configError);
-    }
-  }, [userConfig, configError]);
+
+    fetchUserConfig();
+  }, [user]);
 
   // Mutation to update the user's API key
   const updateKeyMutation = useMutation({
@@ -57,12 +67,23 @@ export default function ApiKeyManager() {
       const res = await apiRequest("POST", "/api/settings/apikey", { apiKey: key });
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Update local state immediately
       setLocalHasApiKey(true);
       
-      // Invalidate user config cache
-      queryClient.invalidateQueries({ queryKey: ["/api/user/config"] });
+      // Fetch updated config
+      try {
+        const response = await fetch("/api/user/config", {
+          credentials: "include"
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUserConfig(data);
+        }
+      } catch (error) {
+        console.error("Error fetching updated user config:", error);
+      }
       
       toast({
         title: "API Key Updated",
@@ -102,7 +123,7 @@ export default function ApiKeyManager() {
     setIsHidden(!isHidden);
   };
 
-  if (isConfigLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -111,7 +132,7 @@ export default function ApiKeyManager() {
   }
 
   // Use our local state that's updated immediately after save
-  const hasApiKey = localHasApiKey || userConfig?.hasApiKey;
+  const hasApiKey = localHasApiKey || (userConfig?.hasApiKey || false);
 
   return (
     <div className="space-y-6">
