@@ -654,8 +654,14 @@ const FineTuningPage = () => {
                   <FormItem>
                     <FormLabel>Validation File (Optional)</FormLabel>
                     <Select 
-                      onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} 
-                      defaultValue={field.value ? field.value.toString() : undefined}
+                      onValueChange={(value) => {
+                        if (value === "none") {
+                          field.onChange(null);
+                        } else {
+                          field.onChange(value ? parseInt(value) : null);
+                        }
+                      }} 
+                      defaultValue={field.value ? field.value.toString() : "none"}
                     >
                       <FormControl>
                         <SelectTrigger>
