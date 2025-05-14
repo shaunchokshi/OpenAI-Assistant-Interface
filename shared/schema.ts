@@ -7,7 +7,7 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: text("password"), // Can be null for social login users
   name: varchar("name", { length: 255 }),
-  picture: varchar("picture", { length: 1024 }),
+  picture: text("picture"), // Changed from varchar(1024) to text to handle longer picture URLs
   role: varchar("role", { length: 50 }).default("user"), // Possible values: user, admin, editor
   openaiKeyHash: varchar("openai_key_hash", { length: 255 }),
   openaiKeyAddedAt: timestamp("openai_key_added_at"), // When the API key was added
