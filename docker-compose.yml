@@ -6,6 +6,7 @@ services:
     ports:
       - "5000:5000"
     command: ["node", "--experimental-specifier-resolution=node", "production-server.js"]
+    container_name: oai-app
     environment:
       - NODE_ENV=production
       # Set a clear database URL that uses the postgres service
@@ -34,8 +35,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     volumes:
-      - app_logs:/app/logs
-      - app_uploads:/app/uploads
+      - openai-assistant-interface_app_logs:/app/logs
+      - openai-assistant-interface_app_uploads:/app/uploads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
       interval: 30s
@@ -45,6 +46,7 @@ services:
 
   postgres:
     image: postgres:14-alpine
+    container_name: oai-db
     environment:
       - POSTGRES_USER=${PGUSER}
       - POSTGRES_PASSWORD=${PGPASSWORD}
@@ -52,7 +54,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - openai-assistant-interface_postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PGUSER} -d ${PGDATABASE}"]
@@ -61,6 +63,9 @@ services:
       retries: 5
 
 volumes:
-  postgres_data:
-  app_logs:
-  app_uploads:
+  openai-assistant-interface_app_logs:
+    external: true
+  openai-assistant-interface_app_uploads:
+    external: true
+  openai-assistant-interface_postgres_data:
+    external: true
