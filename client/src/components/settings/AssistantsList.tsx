@@ -9,7 +9,8 @@ import {
   Star, 
   Check, 
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Import
 } from "lucide-react";
 import { 
   AlertDialog,
@@ -34,9 +35,10 @@ interface AssistantWithDefault extends Assistant {
 
 interface AssistantsListProps {
   onCreateNew: () => void;
+  onImport?: () => void;
 }
 
-export function AssistantsList({ onCreateNew }: AssistantsListProps) {
+export function AssistantsList({ onCreateNew, onImport }: AssistantsListProps) {
   const { toast } = useToast();
 
   // Fetch all user assistants
@@ -130,12 +132,20 @@ export function AssistantsList({ onCreateNew }: AssistantsListProps) {
           <div className="flex flex-col items-center justify-center text-center p-4">
             <h3 className="text-lg font-medium mb-2">No assistants found</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              You haven't created any assistants yet. Create your first assistant to get started.
+              You haven't created any assistants yet. Create your first assistant or import existing ones from OpenAI.
             </p>
-            <Button onClick={onCreateNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Assistant
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={onCreateNew}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Assistant
+              </Button>
+              {onImport && (
+                <Button variant="outline" onClick={onImport}>
+                  <Import className="h-4 w-4 mr-2" />
+                  Import from OpenAI
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -146,10 +156,18 @@ export function AssistantsList({ onCreateNew }: AssistantsListProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Your Assistants</h3>
-        <Button onClick={onCreateNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create New
-        </Button>
+        <div className="flex gap-3">
+          {onImport && (
+            <Button variant="outline" onClick={onImport}>
+              <Import className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+          )}
+          <Button onClick={onCreateNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create New
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

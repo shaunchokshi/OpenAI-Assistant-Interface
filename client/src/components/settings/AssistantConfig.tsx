@@ -178,7 +178,10 @@ export default function AssistantConfig() {
 
         {/* Assistants Tab */}
         <TabsContent value="assistants">
-          <AssistantsList onCreateNew={() => setActiveTab("create-assistant")} />
+          <AssistantsList 
+            onCreateNew={() => setActiveTab("create-assistant")} 
+            onImport={() => setActiveTab("import-assistants")}
+          />
         </TabsContent>
 
         {/* Create Assistant Tab */}
