@@ -184,12 +184,13 @@ export const resetPasswordSchema = z.object({
   newPassword: z.string().min(8, "Password must be at least 8 characters")
 });
 
-export const assistantSchema = createInsertSchema(assistants, {
-  id: undefined,
-  userId: undefined, // This will be set by the server
-  createdAt: undefined,
-  updatedAt: undefined
-});
+export const assistantSchema = createInsertSchema(assistants)
+  .omit({
+    id: true,
+    userId: true, // This will be set by the server
+    createdAt: true,
+    updatedAt: true
+  });
 
 export const updateAssistantSchema = assistantSchema.partial();
 

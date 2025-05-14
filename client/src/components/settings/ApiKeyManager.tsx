@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2, Key, ShieldCheck, ShieldAlert } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 
 // Type for user configuration response
 type UserConfig = {
@@ -38,6 +37,7 @@ export default function ApiKeyManager() {
     staleTime: 0,  // Don't use cached data
     refetchOnMount: true,  // Always refetch when component mounts
     refetchOnWindowFocus: true,  // Refetch when window gets focus
+    queryFn: getQueryFn(),
   });
   
   // Update local state when data changes
