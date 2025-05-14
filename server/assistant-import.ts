@@ -91,6 +91,10 @@ export async function importOpenAIAssistant(req: Request, res: Response) {
       // Fetch the specific assistant from OpenAI
       const openaiAssistant = await openai.beta.assistants.retrieve(assistantId);
       
+      // Extract file_ids from the OpenAI assistant (if exists)
+      // @ts-ignore - The OpenAI API does have file_ids but TypeScript may not recognize it
+      const fileIds = openaiAssistant.file_ids || [];
+      
       // Create the assistant in our database
       const assistant = await storage.createAssistant({
         name: openaiAssistant.name || "Imported Assistant",
@@ -99,8 +103,7 @@ export async function importOpenAIAssistant(req: Request, res: Response) {
         model: openaiAssistant.model,
         instructions: openaiAssistant.instructions || null,
         temperature: 0.7, // Default
-        userId: req.user.id,
-        fileIds: openaiAssistant.file_ids || [],
+        fileIds: fileIds
       });
       
       return res.status(201).json(assistant);
@@ -145,6 +148,10 @@ export async function importMultipleAssistants(req: Request, res: Response) {
           // Fetch the specific assistant from OpenAI
           const openaiAssistant = await openai.beta.assistants.retrieve(assistantId);
           
+          // Extract file_ids from the OpenAI assistant (if exists)
+          // @ts-ignore - The OpenAI API does have file_ids but TypeScript may not recognize it
+          const fileIds = openaiAssistant.file_ids || [];
+          
           // Create the assistant in our database
           const assistant = await storage.createAssistant({
             name: openaiAssistant.name || "Imported Assistant",
@@ -153,8 +160,8 @@ export async function importMultipleAssistants(req: Request, res: Response) {
             model: openaiAssistant.model,
             instructions: openaiAssistant.instructions || null,
             temperature: 0.7, // Default
-            userId: req.user.id,
-            fileIds: openaiAssistant.file_ids || [],
+            fileIds: fileIds,
+            userId: req.user.id
           });
           
           importedAssistants.push(assistant);
