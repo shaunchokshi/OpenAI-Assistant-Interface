@@ -109,7 +109,7 @@ export default function FilesPage() {
   };
 
   // Handle file upload submission
-  const handleUploadSubmit = () => {
+  const handleUploadSubmit = async () => {
     if (!selectedFiles || selectedFiles.length === 0) {
       toast({
         title: "No files selected",
@@ -119,12 +119,49 @@ export default function FilesPage() {
       return;
     }
 
-    const formData = new FormData();
-    // Only upload the first file for now (API expects a single file)
-    formData.append("file", selectedFiles[0]);
-    formData.append("purpose", "assistants");
+    setIsUploading(true);
+    let successCount = 0;
+    let errorCount = 0;
 
-    uploadMutation.mutate(formData);
+    // Process each selected file
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("purpose", "assistants");
+      
+      try {
+        // Set progress based on current file index
+        setUploadProgress(Math.round((i / selectedFiles.length) * 100));
+        
+        // Use the mutation function directly
+        await uploadMutation.mutationFn(formData);
+        successCount++;
+      } catch (error) {
+        console.error(`Error uploading file ${file.name}:`, error);
+        errorCount++;
+      }
+    }
+
+    // Trigger success logic manually
+    queryClient.invalidateQueries({ queryKey: ["/api/files"] });
+    setIsUploadDialogOpen(false);
+    setSelectedFiles(null);
+    setUploadProgress(0);
+    setIsUploading(false);
+    
+    if (successCount > 0) {
+      toast({
+        title: "Upload successful",
+        description: `Successfully uploaded ${successCount} file${successCount !== 1 ? 's' : ''}${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
+      });
+    } else if (errorCount > 0) {
+      toast({
+        title: "Upload failed",
+        description: `Failed to upload ${errorCount} file${errorCount !== 1 ? 's' : ''}`,
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle file download
