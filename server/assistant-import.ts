@@ -84,6 +84,15 @@ export async function importOpenAIAssistant(req: Request, res: Response) {
       return res.status(400).json({ error: "Assistant ID and API key are required" });
     }
     
+    // Validate the assistant ID format
+    if (typeof assistantId !== 'string' || !assistantId.startsWith('asst_')) {
+      logger.error(`Invalid assistant ID: ${assistantId}. Expected an ID that begins with 'asst_'`);
+      return res.status(400).json({ 
+        error: "Invalid assistant ID",
+        details: "Expected an ID that begins with 'asst_'"
+      });
+    }
+    
     try {
       // Create OpenAI client with the temporary API key provided
       const openai = new OpenAI({ apiKey });
@@ -172,6 +181,16 @@ export async function importMultipleAssistants(req: Request, res: Response) {
       
       // Import each assistant
       for (const assistantId of assistantIds) {
+        // Skip null, undefined or invalid assistant IDs
+        if (!assistantId || typeof assistantId !== 'string' || !assistantId.startsWith('asst_')) {
+          logger.error(`Invalid assistant ID: ${assistantId}. Expected an ID that begins with 'asst_'`);
+          errors.push({
+            assistantId: assistantId || 'null',
+            error: "Invalid assistant ID. Expected an ID that begins with 'asst_'"
+          });
+          continue;
+        }
+        
         try {
           // Fetch the specific assistant from OpenAI
           const openaiAssistant = await openai.beta.assistants.retrieve(assistantId);
