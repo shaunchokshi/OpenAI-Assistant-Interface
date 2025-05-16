@@ -134,8 +134,18 @@ export default function FilesPage() {
         // Set progress based on current file index
         setUploadProgress(Math.round((i / selectedFiles.length) * 100));
         
-        // Use the mutation function directly
-        await uploadMutation.mutationFn(formData);
+        // Upload the file using fetch directly
+        const response = await fetch("/api/files/upload", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Failed to upload file");
+        }
+        
         successCount++;
       } catch (error) {
         console.error(`Error uploading file ${file.name}:`, error);
@@ -143,25 +153,31 @@ export default function FilesPage() {
       }
     }
 
-    // Trigger success logic manually
-    queryClient.invalidateQueries({ queryKey: ["/api/files"] });
-    setIsUploadDialogOpen(false);
-    setSelectedFiles(null);
-    setUploadProgress(0);
-    setIsUploading(false);
+    // Complete the progress bar
+    setUploadProgress(100);
     
-    if (successCount > 0) {
-      toast({
-        title: "Upload successful",
-        description: `Successfully uploaded ${successCount} file${successCount !== 1 ? 's' : ''}${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
-      });
-    } else if (errorCount > 0) {
-      toast({
-        title: "Upload failed",
-        description: `Failed to upload ${errorCount} file${errorCount !== 1 ? 's' : ''}`,
-        variant: "destructive",
-      });
-    }
+    // Small delay to show the completed progress
+    setTimeout(() => {
+      // Refresh the files list
+      queryClient.invalidateQueries({ queryKey: ["/api/files"] });
+      setIsUploadDialogOpen(false);
+      setSelectedFiles(null);
+      setUploadProgress(0);
+      setIsUploading(false);
+      
+      if (successCount > 0) {
+        toast({
+          title: "Upload successful",
+          description: `Successfully uploaded ${successCount} file${successCount !== 1 ? 's' : ''}${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
+        });
+      } else if (errorCount > 0) {
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload ${errorCount} file${errorCount !== 1 ? 's' : ''}`,
+          variant: "destructive",
+        });
+      }
+    }, 500); // Short delay to see the completed progress bar
   };
 
   // Handle file download
@@ -400,7 +416,7 @@ export default function FilesPage() {
       </div>
       {/* File Upload Dialog */}
       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Upload Files</DialogTitle>
             <DialogDescription>
@@ -408,48 +424,104 @@ export default function FilesPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="cursor-pointer file:cursor-pointer file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0 file:font-medium
-              file:bg-primary file:text-primary-foreground
-              hover:file:bg-primary/90"
-              onChange={handleFileChange}
-            />
-            {selectedFiles && selectedFiles.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm font-medium mb-1">Selected files:</p>
-                <ul className="text-sm text-muted-foreground">
-                  {Array.from(selectedFiles).map((file, index) => (
-                    <li key={index} className="truncate">
-                      {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {isUploading && (
-              <div className="mt-2">
-                <p className="text-sm mb-1">Uploading...</p>
-                <div className="h-2 bg-secondary rounded">
-                  <div 
-                    className="h-full bg-primary rounded" 
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
+            {/* Drag and Drop File Upload Area */}
+            <div 
+              className={`
+                border-2 border-dashed rounded-lg p-8 text-center transition-colors duration-200
+                ${isUploading ? 'bg-primary/5 border-primary/20' : 'hover:bg-accent/20 hover:border-accent'}
+                ${selectedFiles && selectedFiles.length > 0 ? 'border-primary' : 'border-muted'}
+              `}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  setSelectedFiles(e.dataTransfer.files);
+                }
+              }}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              style={{ cursor: isUploading ? 'default' : 'pointer' }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+              
+              {isUploading ? (
+                <div className="text-center space-y-3">
+                  <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
+                  <p className="text-sm font-medium">Uploading files...</p>
+                  <div className="h-2 bg-secondary rounded w-3/4 mx-auto mt-4">
+                    <div 
+                      className="h-full bg-primary rounded transition-all duration-300" 
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {Math.round(uploadProgress)}% complete
+                  </p>
                 </div>
-              </div>
-            )}
+              ) : !selectedFiles || selectedFiles.length === 0 ? (
+                <div className="space-y-3">
+                  <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">
+                      Drag and drop files here or click to browse
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, text, CSV, JSONL, and code files recommended
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <FileText className="h-10 w-10 text-primary mx-auto" />
+                  <p className="text-sm font-medium">
+                    {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} selected
+                  </p>
+                  <div className="max-h-40 overflow-y-auto border rounded p-2 mt-2 bg-background/50 mx-auto max-w-md">
+                    <ul className="text-xs text-left divide-y">
+                      {Array.from(selectedFiles).map((file, index) => (
+                        <li key={index} className="py-1 px-2 flex items-center justify-between">
+                          <div className="truncate flex-1">
+                            <span className="font-medium">{file.name}</span>
+                          </div>
+                          <span className="text-muted-foreground whitespace-nowrap pl-2">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)} disabled={isUploading}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleUploadSubmit} disabled={!selectedFiles || isUploading}>
-              {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-              Upload
-            </Button>
+          <DialogFooter className="flex items-center justify-between">
+            <div className="text-xs text-muted-foreground">
+              Max 50MB per file
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)} disabled={isUploading}>
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                onClick={handleUploadSubmit} 
+                disabled={!selectedFiles || selectedFiles.length === 0 || isUploading}
+                className="min-w-24"
+              >
+                {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                {isUploading ? "Uploading..." : "Upload Files"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
