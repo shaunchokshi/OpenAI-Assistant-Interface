@@ -46,6 +46,7 @@ export async function fetchOpenAIAssistants(req: Request, res: Response) {
       
       // Transform to our data format
       const assistants = assistantsList.data.map(assistant => ({
+        id: assistant.id, // Include the original ID for selection in the UI
         name: assistant.name || "Unnamed Assistant",
         description: assistant.description || null,
         openaiAssistantId: assistant.id,
