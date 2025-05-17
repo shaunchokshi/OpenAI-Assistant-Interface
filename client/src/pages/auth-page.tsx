@@ -45,7 +45,7 @@ export default function AuthPage() {
               className="h-16 w-16 mb-3"
             />
             <h1 className="text-3xl font-bold text-center">
-              CK Assistant
+              CeeK OpenAI API Assistant
             </h1>
           </div>
           
@@ -218,7 +218,7 @@ export default function AuthPage() {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary/60 items-center justify-center p-12">
         <div className="max-w-lg text-white">
           <h2 className="text-4xl font-bold mb-6">
-            Interact with OpenAI Assistants
+            CeeK OpenAI API Assistant
           </h2>
           <p className="text-xl mb-8">
             Create, manage, and chat with your OpenAI assistants in one 

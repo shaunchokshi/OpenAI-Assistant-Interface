@@ -79,7 +79,7 @@ const Sidebar = ({ collapsed = false, onToggle, isMobile = false }: SidebarProps
                   className="h-10 w-10 mr-3"
                 />
                 <div>
-                  <h2 className="text-xl font-bold">CK Assistant</h2>
+                  <h2 className="text-xl font-bold">CeeK OpenAI API Assistant</h2>
                   <div className="text-sm text-gray-400 truncate">
                     {user?.email}
                   </div>
