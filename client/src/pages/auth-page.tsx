@@ -213,6 +213,7 @@ export default function AuthPage() {
             </TabsContent>
           </Tabs>
         </div>
+        <AuthFooter />
       </div>
       
       {/* Hero section */}
