@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import logoImage from "@/assets/logo.png";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -37,9 +38,16 @@ export default function AuthPage() {
       {/* Form section */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center p-8">
         <div className="max-w-md mx-auto w-full">
-          <h1 className="text-3xl font-bold mb-8 text-center">
-            OpenAI Assistant
-          </h1>
+          <div className="flex flex-col items-center mb-8">
+            <img 
+              src={logoImage} 
+              alt="CK Consulting Logo" 
+              className="h-16 w-16 mb-3"
+            />
+            <h1 className="text-3xl font-bold text-center">
+              CK Assistant
+            </h1>
+          </div>
           
           <Tabs defaultValue="login" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2 mb-8">
