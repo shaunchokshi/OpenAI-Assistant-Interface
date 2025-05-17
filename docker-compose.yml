@@ -12,13 +12,13 @@ services:
       # Set a clear database URL that uses the postgres service
       - DATABASE_URL=postgres://${PGUSER}:${PGPASSWORD}@postgres:5432/${PGDATABASE}
       - SESSION_SECRET=${SESSION_SECRET}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+#      - OPENAI_API_KEY=${OPENAI_API_KEY}
       # Make sure the standard PostgreSQL environment variables are set correctly
       - PGHOST=postgres
       - PGUSER=${PGUSER}
       - PGPASSWORD=${PGPASSWORD}
       - PGDATABASE=${PGDATABASE}
-      - PGPORT=5432
+      - PGPORT=${PGPORT}
       - SMTP_FROM=${SMTP_FROM}
       - SMTP_RELAY_SERVER=${SMTP_RELAY_SERVER}
       - SMTP_RELAY_PORT=${SMTP_RELAY_PORT}
@@ -51,8 +51,9 @@ services:
       - POSTGRES_USER=${PGUSER}
       - POSTGRES_PASSWORD=${PGPASSWORD}
       - POSTGRES_DB=${PGDATABASE}
+      - POSTGRES_PORT=${PGPORT}
     ports:
-      - "5432:5432"
+      - "${PGPORT}:${PGPORT}"
     volumes:
       - openai-assistant-interface_postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
