@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Brain
 } from "lucide-react";
+import logoImage from "@/assets/logo.png";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -71,10 +72,17 @@ const Sidebar = ({ collapsed = false, onToggle, isMobile = false }: SidebarProps
         <div className="p-5 border-b border-gray-800 flex justify-between items-center">
           {!collapsed ? (
             <>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold">OpenAI Assistant</h2>
-                <div className="text-sm mt-2 text-gray-400 truncate">
-                  {user?.email}
+              <div className="flex-1 flex items-center">
+                <img 
+                  src={logoImage} 
+                  alt="CK Consulting Logo" 
+                  className="h-10 w-10 mr-3"
+                />
+                <div>
+                  <h2 className="text-xl font-bold">CK Assistant</h2>
+                  <div className="text-sm text-gray-400 truncate">
+                    {user?.email}
+                  </div>
                 </div>
               </div>
               {onToggle && (
@@ -88,7 +96,12 @@ const Sidebar = ({ collapsed = false, onToggle, isMobile = false }: SidebarProps
               )}
             </>
           ) : (
-            <div className="w-full flex justify-center">
+            <div className="w-full flex flex-col items-center justify-center">
+              <img 
+                src={logoImage} 
+                alt="CK Consulting Logo" 
+                className="h-8 w-8 mb-2"
+              />
               {onToggle && (
                 <button 
                   onClick={onToggle} 
