@@ -59,7 +59,10 @@ export default function TermsPage() {
 
         <h2>Intellectual Property</h2>
         <p>
-          The Service, including its design, code, and content created by the Service providers, is owned by CK Consulting LTD and protected by intellectual property laws. You may not copy, modify, distribute, or create derivative works based on the Service without explicit permission.
+          The code for this app is available under the terms of the MIT License at the GitHub repository <a href="https://github.com/shaunchokshi/OpenAI-Assistant-Interface" target="_blank" rel="noopener noreferrer">https://github.com/shaunchokshi/OpenAI-Assistant-Interface</a>. The license does not include any rights to any brand assets or any other assets of CK Consulting and CK Services LLC.
+        </p>
+        <p>
+          The copyright holder of the app is CK Services LLC d.b.a. CK Consulting, a registered business in Maryland, United States of America. For any inquiries or data requests, please contact admin@ckservicesllc.com.
         </p>
 
         <h2>Limitation of Liability</h2>

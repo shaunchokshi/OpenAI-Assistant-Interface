@@ -14,15 +14,11 @@ export default function AuthFooter() {
             </p>
           </div>
           <div className="flex space-x-4">
-            <Link href="/terms">
-              <a className="text-xs text-gray-400 hover:text-gray-300 transition-colors">
-                Terms
-              </a>
+            <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-300 transition-colors">
+              Terms
             </Link>
-            <Link href="/privacy">
-              <a className="text-xs text-gray-400 hover:text-gray-300 transition-colors">
-                Privacy
-              </a>
+            <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-300 transition-colors">
+              Privacy
             </Link>
           </div>
         </div>

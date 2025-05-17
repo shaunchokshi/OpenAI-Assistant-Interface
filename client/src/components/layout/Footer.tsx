@@ -14,15 +14,11 @@ export default function Footer() {
             </p>
           </div>
           <div className="flex space-x-6">
-            <Link href="/terms">
-              <a className="text-sm text-gray-400 hover:text-white transition-colors">
-                Terms of Use
-              </a>
+            <Link href="/terms" className="text-sm text-gray-400 hover:text-white transition-colors">
+              Terms of Use
             </Link>
-            <Link href="/privacy">
-              <a className="text-sm text-gray-400 hover:text-white transition-colors">
-                Privacy Policy
-              </a>
+            <Link href="/privacy" className="text-sm text-gray-400 hover:text-white transition-colors">
+              Privacy Policy
             </Link>
             <a 
               href="https://openai.com/policies" 
