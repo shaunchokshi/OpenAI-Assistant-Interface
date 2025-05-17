@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
+import Footer from "./Footer";
 import { Menu } from "lucide-react";
 
 interface AppLayoutProps {
@@ -58,9 +59,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <Menu size={20} />
           </button>
         )}
-        <div className={`${isMobile ? 'p-4 pt-16' : 'p-6'}`}>
+        <div className={`${isMobile ? 'p-4 pt-16' : 'p-6'} min-h-[calc(100vh-130px)]`}>
           {children}
         </div>
+        <Footer />
       </main>
     </div>
   );

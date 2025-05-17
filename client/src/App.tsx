@@ -16,6 +16,8 @@ import AnalyticsPage from "./pages/analytics-page";
 import ChatPage from "./pages/chat-page";
 import UsersPage from "./pages/users-page";
 import FineTuningPage from "./pages/fine-tuning-page";
+import TermsPage from "./pages/terms-page";
+import PrivacyPage from "./pages/privacy-page";
 import NotFound from "./pages/not-found";
 
 // Auth Components
@@ -40,6 +42,12 @@ function Router() {
       </Route>
       <Route path="/reset-password">
         <ResetPassword />
+      </Route>
+      <Route path="/terms">
+        <TermsPage />
+      </Route>
+      <Route path="/privacy">
+        <PrivacyPage />
       </Route>
       <Route>
         <NotFound />

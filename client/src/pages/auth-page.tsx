@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import logoImage from "@/assets/logo.png";
+import AuthFooter from "@/components/layout/AuthFooter";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
