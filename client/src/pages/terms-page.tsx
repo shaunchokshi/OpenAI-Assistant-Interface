@@ -59,7 +59,7 @@ export default function TermsPage() {
 
         <h2>Intellectual Property</h2>
         <p>
-          The code for this app is available under the terms of the MIT License at the GitHub repository <a href="https://github.com/shaunchokshi/OpenAI-Assistant-Interface" target="_blank" rel="noopener noreferrer">https://github.com/shaunchokshi/OpenAI-Assistant-Interface</a>. The license does not include any rights to any brand assets or any other assets of CK Consulting and CK Services LLC.
+          The code for this app is available under the terms of the MIT License at the GitHub repository <a href="https://github.com/shaunchokshi/OpenAI-Assistant-Interface" target="_blank" rel="noopener noreferrer">https://github.com/shaunchokshi/OpenAI-Assistant-Interface</a>. The license does not include any rights to any brand assets or any other assets of CK Services LLC and/or any trade names, subsidiaries, etc. of CK Services LLC.
         </p>
         <p>
           The copyright holder of the app is CK Services LLC d.b.a. CK Consulting, a registered business in Maryland, United States of America. For any inquiries or data requests, please contact admin@ckservicesllc.com.

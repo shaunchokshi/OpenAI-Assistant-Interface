@@ -10,7 +10,7 @@ export default function AuthFooter() {
         <div className="flex flex-col lg:flex-row lg:justify-between items-center">
           <div className="mb-2 lg:mb-0">
             <p className="text-xs text-gray-400">
-              © {currentYear} CK Consulting LTD
+              © {currentYear} CK Services LLC d.b.a. CK Consulting. All rights reserved.
             </p>
           </div>
           <div className="flex space-x-4">
